@@ -4,8 +4,8 @@ import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Header from "../components/common/Header";
 import { trpc } from "../utils/trpc";
-import PendingProposals from "../components/proposals/Pending";
 import styles from '../styles/gridPageLayout.module.css'
+import PendingProposals from "../components/proposals/pending";
 
 const Home: NextPage = () => {
   return (
