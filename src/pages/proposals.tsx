@@ -5,7 +5,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import Header from "../components/common/Header";
 import { trpc } from "../utils/trpc";
 import styles from '../styles/gridPageLayout.module.css'
-import PendingProposals from "../components/proposals/pending";
+import PendingProposals from "../components/proposals/Pending";
 
 const Home: NextPage = () => {
   return (
