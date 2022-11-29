@@ -1,0 +1,4 @@
+.wrapper {
+  @apply grid place-items-center min-h-screen flex-col bg-gradient-to-b from-[#2e026d] to-[#15162c];
+  grid-template-rows: auto 1fr;
+}

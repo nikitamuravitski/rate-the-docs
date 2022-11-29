@@ -13,5 +13,15 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/ratings',
+        permanent: false,
+        locale: false
+      },
+    ]
+  },
 };
 export default config;
