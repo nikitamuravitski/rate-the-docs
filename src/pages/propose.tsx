@@ -85,7 +85,7 @@ const Home: NextPage = () => {
               />
             </div>
             <div className="flex w-full justify-between items-center text-white">
-              <label htmlFor='currentVersionForProposalInput' >Version</label>
+              <label htmlFor='currentVersionForProposalInput' >Docs Version</label>
               <input
                 className="w-full max-w-xs rounded-md bg-[#ffffff29] border border-stone-700 p-3"
                 required
