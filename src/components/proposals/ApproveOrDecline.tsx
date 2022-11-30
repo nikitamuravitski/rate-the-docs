@@ -3,16 +3,24 @@ import { trpc } from '../../utils/trpc'
 
 type ApproveOrDeclineType = {
   proposalId: string
-
+  refetchTable: any
 }
 
-const ApproveOrDecline = ({ proposalId, }: ApproveOrDeclineType) => {
+const ApproveOrDecline = ({ proposalId, refetchTable }: ApproveOrDeclineType) => {
 
   const approveMutation = trpc.proposals.approveProposal.useMutation()
   const declineMutation = trpc.proposals.declineProposal.useMutation()
 
-  const onApproveHandler = () => approveMutation.mutate({ id: proposalId })
-  const onDeclineHandler = () => declineMutation.mutate({ id: proposalId })
+  const onApproveHandler = () => {
+    approveMutation.mutate({ id: proposalId }, {
+      onSuccess: () => refetchTable()
+    })
+  }
+  const onDeclineHandler = () => {
+    declineMutation.mutate({ id: proposalId }, {
+      onSuccess: () => refetchTable()
+    })
+  }
 
   return (
     <div className='flex gap-3 justify-center'>
