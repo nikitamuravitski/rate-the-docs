@@ -1,4 +1,8 @@
 .wrapper {
   @apply grid place-items-center min-h-screen flex-col bg-gradient-to-b from-[#2e026d] to-[#15162c];
   grid-template-rows: auto 1fr;
+  background-image: 
+  linear-gradient(to bottom, #2f026dfc, #15162cfc),
+  url('../assets/Lines-PNG-HD-Image.png');
+  background-size: cover;
 }

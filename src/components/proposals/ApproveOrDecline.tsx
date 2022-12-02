@@ -8,8 +8,8 @@ type ApproveOrDeclineType = {
 
 const ApproveOrDecline = ({ proposalId, refetchTable }: ApproveOrDeclineType) => {
 
-  const approveMutation = trpc.proposals.approveProposal.useMutation()
-  const declineMutation = trpc.proposals.declineProposal.useMutation()
+  const approveMutation = trpc.documentation.approveProposal.useMutation()
+  const declineMutation = trpc.documentation.declineProposal.useMutation()
 
   const onApproveHandler = () => {
     approveMutation.mutate({ id: proposalId }, {

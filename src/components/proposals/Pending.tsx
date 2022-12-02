@@ -6,26 +6,12 @@ import {
   flexRender,
   getCoreRowModel,
 } from '@tanstack/react-table'
-import { Proposal } from '../../types/Proposal'
+import { DocumentatnioWithVotes } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
 import Vote from './Vote'
 import ApproveOrDecline from './ApproveOrDecline'
 
-interface ProposalRow extends Proposal { id: string, votes: number }
-
-const defaultData: ProposalRow[] = [
-  {
-    id: '',
-    name: '',
-    description: '',
-    linkToDocs: '',
-    npmPackageName: '',
-    version: '',
-    votes: 0,
-  },
-]
-
-const columnHelper = createColumnHelper<ProposalRow>()
+const columnHelper = createColumnHelper<DocumentatnioWithVotes>()
 
 
 
@@ -34,13 +20,18 @@ const PendingProposals = () => {
     pageIndex: 0,
     pageSize: 8
   })
+
   const {
     data: proposalsData,
     isFetched: isProposalsFetched,
     isLoading: isProposalsLoading,
-    refetch: refetchTable
-  } = trpc.proposals.getPendingProposals.useQuery({ pageIndex, pageSize }, {
-    keepPreviousData: true
+    refetch: refetchTable,
+  } = trpc.documentation.getPendingProposals.useQuery({ pageIndex, pageSize }, {
+    keepPreviousData: true,
+    initialData: {
+      totalPages: 1,
+      pendingProposals: []
+    }
   })
 
   const columns = useMemo(() => [
@@ -61,17 +52,16 @@ const PendingProposals = () => {
       cell: info => info.getValue(),
       enableSorting: true,
     }),
-    columnHelper.accessor('version', {
+    columnHelper.accessor('docVersion', {
       header: () => 'Docs Version',
       cell: info => info.getValue(),
       enableSorting: true,
     }),
     columnHelper.accessor('votes', {
       header: () => 'Votes',
-      cell: info => <Vote proposalId={info.row.original.id} initialValue={info.getValue()} />,
+      cell: info => <Vote refetchTable={refetchTable} proposalId={info.row.original.id} initialValue={info.getValue()} />,
       enableSorting: true,
     }),
-
     columnHelper.display({
       id: 'approve',
       cell: props => <div className='flex justify-around'>
@@ -97,8 +87,8 @@ const PendingProposals = () => {
 
   return (<div className='flex flex-col self-start gap-3 p-3 items-center w-full'>
     <div className='rounded-3xl overflow-hidden w-full max-w-7xl bg-[#00fffc0a]'>
-      <div className='max-h-[60vh] overflow-auto p-3'>
-        <table className=' text-slate-300 w-full'>
+      <div className='max-h-[60vh] overflow-auto p-3  backdrop-blur-sm'>
+        <table className=' text-slate-300 w-full '>
           <thead className='sticky top-0'>
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id} className='  backdrop-blur-sm'>

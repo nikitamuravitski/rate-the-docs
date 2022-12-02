@@ -1,50 +1,60 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   useReactTable,
   createColumnHelper,
   flexRender,
   getCoreRowModel,
 } from '@tanstack/react-table'
-import { Documentation } from '../../types/Documentation'
+import { DocumentationWithRatings } from '../../types/Documentation'
+import { trpc } from '../../utils/trpc'
+import Rate from './Rate'
 
 
 
-const columnHelper = createColumnHelper<Documentation>()
-
-const columns = [
-  columnHelper.accessor('name', {
-    cell: info => info.getValue(),
-    header: () => 'Name'
-  }),
-  columnHelper.accessor('description', {
-    cell: info => info.getValue(),
-    header: () => 'Description',
-  }),
-  columnHelper.accessor('currentVersion', {
-    header: () => 'Current Version',
-    cell: info => info.getValue(),
-  }),
-  columnHelper.accessor('rating', {
-    header: () => 'Rating',
-    cell: info => info.getValue(),
-    enableSorting: true,
-  })
-]
+const columnHelper = createColumnHelper<DocumentationWithRatings>()
 
 const Ratings = () => {
-  const [data, setData] = useState(() => [])
-
   const [{ pageIndex, pageSize }, setPagination] = useState({
     pageIndex: 0,
     pageSize: 8
   })
 
-  const table = useReactTable({
+  const {
     data,
+    isFetched: isProposalsFetched,
+    isLoading: isProposalsLoading,
+    refetch: refetchTable,
+  } = trpc.documentation.getDocumentation.useQuery({ pageIndex, pageSize }, {
+    keepPreviousData: true,
+    initialData: {
+      totalPages: 1,
+      pendingProposals: []
+    }
+  })
+
+  const columns = useMemo(() => [
+    columnHelper.accessor('name', {
+      cell: info => info.getValue(),
+      header: () => 'Name'
+    }),
+    columnHelper.accessor('description', {
+      cell: info => info.getValue(),
+      header: () => 'Description',
+    }),
+
+    columnHelper.accessor('ratings', {
+      header: () => 'Rating',
+      cell: info => <Rate key={info.row.original.id} documentationId={info.row.original.id} initialData={info.getValue()} />,
+      enableSorting: true,
+    })
+  ], [])
+
+  const table = useReactTable({
+    data: data?.documentation ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
-    pageCount: 1, //needs to be fetched!!!
+    pageCount: data?.totalPages ?? 1,
     state: {
       pagination: {
         pageSize,
@@ -52,9 +62,10 @@ const Ratings = () => {
       }
     }
   })
-  return (<div className='flex flex-col w-full p-3 gap-3 items-center self-start'>
+
+  return (<div className='flex flex-col w-full p-3 gap-3 items-center self-start '>
     <div className='rounded-xl overflow-hidden  w-full max-w-7xl m-3 bg-[#00fffc0a]'>
-      <div className='max-h-[70vh] overflow-auto p-3'>
+      <div className='max-h-[70vh] overflow-auto p-3 backdrop-blur-sm'>
         <table className=' text-slate-300 w-full '>
           <thead className='sticky top-0'>
             {table.getHeaderGroups().map(headerGroup => (

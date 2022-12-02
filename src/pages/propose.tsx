@@ -6,7 +6,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import Header from "../components/common/Header";
 import { trpc } from "../utils/trpc";
 import styles from '../styles/gridPageLayout.module.css'
-import { Proposal } from "../types/Proposal";
+import { Documentation } from "../types/Documentation";
 
 const Home: NextPage = () => {
   const [name, setName] = useState<string>('')
@@ -16,10 +16,11 @@ const Home: NextPage = () => {
   const [version, setVersion] = useState<string>('')
   const [message, setMessage] = useState<string>('')
 
-  const createProposalMutation = trpc.proposals.createProposal.useMutation<Proposal>()
+  const createProposalMutation = trpc.documentation.createProposal.useMutation<Documentation>()
+  
   const createProposalHandler = async () => {
     setMessage('')
-    createProposalMutation.mutate({ name, description, linkToDocs, npmPackageName, version }, {
+    createProposalMutation.mutate({ name, description, linkToDocs, npmPackageName, docVersion: version }, {
       onError: data => setMessage(data.message),
       onSuccess: data => {
         setMessage('success')
@@ -96,7 +97,7 @@ const Home: NextPage = () => {
               />
             </div>
             <button type="submit" className="text-white font-semibold text-lg py-2 px-5 bg-gradient-to-r from-purple-400 to-pink-600  rounded-lg w-fit">Submit</button>
-          <div className="text-white">{message}</div>
+            <div className="text-white">{message}</div>
           </form>
         </div>
       </main>

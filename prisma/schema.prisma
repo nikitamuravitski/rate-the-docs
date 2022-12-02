@@ -49,6 +49,8 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  Rating        Rating[]
+  Vote          Vote[]
 }
 
 model VerificationToken {
@@ -61,25 +63,36 @@ model VerificationToken {
 }
 
 model Documentation {
-  id             String @id @default(auto()) @map("_id") @db.ObjectId
-  name           String
-  description    String
-  currentVersion String
-  rating         Float?
-}
-
-model Proposal {
-  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  id             String              @id @default(auto()) @map("_id") @db.ObjectId
   name           String
   description    String
   linkToDocs     String
   npmPackageName String
-  version        String
-  votes          Int
-  status         ProposalStatus @default(voting)
+  docVersion     String
+  status         DocumentationStatus @default(voting)
+  ratings        Rating[]
+  votes          Vote[]
 }
 
-enum ProposalStatus {
+model Rating {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  value           Int
+  user            User          @relation(fields: [userId], references: [id])
+  userId          String        @db.ObjectId
+  documentation   Documentation @relation(fields: [documentationId], references: [id])
+  documentationId String        @db.ObjectId
+}
+
+model Vote {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  value           Int
+  user            User          @relation(fields: [userId], references: [id])
+  userId          String        @db.ObjectId
+  documentation   Documentation @relation(fields: [documentationId], references: [id])
+  documentationId String        @db.ObjectId
+}
+
+enum DocumentationStatus {
   voting
   declined
   accepted

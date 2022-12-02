@@ -1,32 +1,50 @@
-import React, { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
+import React, { useEffect, useState, useMemo } from 'react'
+import { Vote } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
 
 type VoteComponent = ({
   proposalId: string,
-  initialValue: number
+  initialValue: Vote[],
+  refetchTable(): void
 })
 
 const Vote = ({ proposalId, initialValue }: VoteComponent) => {
-  const [value, setValue] = useState(initialValue)
+  const [votes, setVotes] = useState<Vote[]>(initialValue)
+  const [isCurrentUserVoted, setIsCurrentUserVoted] = useState(false)
 
-  const mutation = trpc.proposals.voteForProposal.useMutation()
+  const { data: session } = useSession()
 
-  const onVoteHandler = (amount: 1 | -1) => mutation.mutate({
-    id: proposalId,
-    newVotesAmount: value + amount,
-  }, {
-    onSuccess: data => setValue(data.votes)
-  })
+  const totalVotes = useMemo(() => {
+    if (votes.length) {
+      return votes.reduce((acc, current) => acc += current.value, 0)
+    }
+    return 0
+  }, [votes])
 
   useEffect(() => {
-    setValue(initialValue)
-  }, [initialValue])
+    if (session?.user?.id && votes.length) {
+      const userId = session.user.id
+      const currentUserVote = votes.find(vote => vote.userId === userId)
+      if (currentUserVote) setIsCurrentUserVoted(true)
+    }
+  }, [votes, session])
+
+  const mutation = trpc.documentation.voteForProposal.useMutation()
+
+  const onVoteHandler = (amount: 1 | -1) => mutation.mutate({
+    documentationId: proposalId,
+    value: amount,
+  }, {
+    onSuccess: (data) => { setVotes((old) => [...old, data]) },
+    onError: e => console.log(e.message)
+  })
 
   return (
     <div className='flex gap-3 justify-center'>
-      <button onClick={() => onVoteHandler(-1)}>{'<'}</button>
-      <div className={`${value >= 0 ? 'bg-purple-600' : 'bg-red-600'} aspect-square min-w-[30px] grid place-items-center rounded-full `}>{value}</div>
-      <button onClick={() => onVoteHandler(1)}>{'>'}</button>
+      {!isCurrentUserVoted && <button onClick={() => onVoteHandler(-1)}>{'<'}</button>}
+      <div>{totalVotes}</div>
+      {!isCurrentUserVoted && <button onClick={() => onVoteHandler(1)}>{'>'}</button>}
     </div>
   )
 }
