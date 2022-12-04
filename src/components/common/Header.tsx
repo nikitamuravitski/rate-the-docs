@@ -25,14 +25,14 @@ const Header = () => {
             </Link>
           </li>
           <li>
-            <a href="/propose">
+            <Link href="/propose">
               Propose
-            </a>
+            </Link>
           </li>
           <li>
-            <a href="/proposals">
+            <Link href="/proposals">
               Proposals
-            </a>
+            </Link>
           </li>
         </ul>
       </nav>

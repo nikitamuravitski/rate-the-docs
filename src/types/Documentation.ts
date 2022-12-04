@@ -10,6 +10,7 @@ export type DocumentationInner = {
   npmPackageName: string
   linkToDocs: string
   docVersion: string
+  language: Language
 }
 
 export type Rating = {
@@ -24,4 +25,10 @@ export type Vote = {
   value: number
   userId: string
   documentationId: string
+}
+export enum Language {
+  java = 'java',
+  javascript = 'javascript',
+  rust = 'rust',
+  python = 'python'
 }

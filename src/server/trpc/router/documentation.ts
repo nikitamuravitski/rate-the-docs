@@ -1,3 +1,4 @@
+import { Language } from './../../../types/Documentation';
 import { protectedProcedure } from '../trpc';
 import { prisma } from '../../db/client';
 import { z } from "zod";
@@ -12,6 +13,12 @@ export const documentationRouter = router({
       linkToDocs: z.string(),
       npmPackageName: z.string(),
       docVersion: z.string(),
+      language: z.union([
+        z.literal(Language.java),
+        z.literal(Language.javascript),
+        z.literal(Language.rust),
+        z.literal(Language.python),
+      ])
     }))
     .mutation(({ input }) => {
       return prisma.documentation.create({ data: { ...input } })

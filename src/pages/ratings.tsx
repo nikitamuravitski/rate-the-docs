@@ -4,7 +4,7 @@ import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Header from "../components/common/Header";
 import { trpc } from "../utils/trpc";
-import Ratings from "../components/ratings";
+import Ratings from "../features/ratings";
 import styles from '../styles/gridPageLayout.module.css'
 
 const Home: NextPage = () => {
