@@ -1,0 +1,3 @@
+.input {
+  @apply box-border w-full max-w-xs rounded-md bg-[#ffffff19] border-2 p-3 backdrop-blur-[2px];
+}

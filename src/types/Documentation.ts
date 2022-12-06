@@ -1,3 +1,8 @@
+import { z } from 'zod'
+import { docVersion } from './zodTypes'
+
+export type DocVersion = z.infer<typeof docVersion>
+
 export type DocumentationWithRatings = DocumentationInner & { ratings: Rating[] }
 export type DocumentatnioWithVotes = DocumentationInner & { votes: Vote[] }
 export type Documentation = DocumentationWithRatings | DocumentatnioWithVotes
@@ -9,7 +14,8 @@ export type DocumentationInner = {
   status: 'voting' | 'declined' | 'accepted'
   npmPackageName: string
   linkToDocs: string
-  docVersion: string
+  docVersion: DocVersion
+  language: Language
 }
 
 export type Rating = {
@@ -24,4 +30,10 @@ export type Vote = {
   value: number
   userId: string
   documentationId: string
+}
+export enum Language {
+  java = 'java',
+  javascript = 'javascript',
+  rust = 'rust',
+  python = 'python'
 }
