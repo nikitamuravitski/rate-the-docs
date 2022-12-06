@@ -47,9 +47,9 @@ const InputWithSelect = ({
       {isInputInFocus && <div
         className='z-50 rounded-md w-full max-h-40 overflow-auto flex flex-col text-zinc-800 bg-slate-100 absolute top-[calc(100%+3px)]'
       >
-        {!value && 'Start typing'}
-        {value && !loading && !options && 'Loading'}
-        {loading && value && 'Loading'}
+        {!value && <span className='p-3'>Start typing</span>}
+        {value && !loading && !options && <span className='p-3'>Loading</span>}
+        {loading && value && <span className='p-3'>Loading</span>}
         {!loading && value && options && options
           .map(option => <button
             tabIndex={0}
