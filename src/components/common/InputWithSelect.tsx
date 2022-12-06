@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { useOutsideClick } from '../../hooks/useOutsideClick'
+import inputStyles from '../../styles/input.module.css'
 
 const InputWithSelect = ({
   errorMessage,
@@ -20,32 +21,31 @@ const InputWithSelect = ({
   label: string
   loading: boolean
 }) => {
+  const id = label.split(' ').join('').toLowerCase()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [isInputInFocus, setIsInputInFocus] = useState<boolean>(false)
 
-  useOutsideClick(inputRef, () => {
-    setTimeout(() => setIsInputInFocus(false), 100)
-  })
+  useOutsideClick(inputRef, () => setIsInputInFocus(false))
+
 
   return (<div className='w-full relative flex justify-between items-center text-white'>
-    <label htmlFor={label.toLowerCase()} >{label}</label>
+    <label htmlFor={id} >{label}</label>
     <div className='relative w-full max-w-xs flex flex-col justify-center'>
       <input
-        id={label.toLowerCase()}
+        id={id}
         type='text'
         value={value}
         onChange={e => onChangeHandler(e.target.value)}
         onMouseDown={() => !isInputInFocus && setIsInputInFocus(true)}
         className={
-          (errorMessage ? "border-orange-400" : "border-stone-700") +
-          " w-full rounded-md bg-[#ffffff29] border-2 border-stone-700 p-3"
+          inputStyles['input'] + ' ' +
+          (errorMessage ? "border-orange-400" : "border-stone-700")
         }
         ref={inputRef}
       />
       {isInputInFocus && <div
-        id={label}
-        className='rounded-md w-full max-h-40 overflow-auto flex flex-col text-zinc-800 bg-slate-100 absolute top-[calc(100%+3px)]'
+        className='z-50 rounded-md w-full max-h-40 overflow-auto flex flex-col text-zinc-800 bg-slate-100 absolute top-[calc(100%+3px)]'
       >
         {!value && 'Start typing'}
         {value && !loading && !options && 'Loading'}
@@ -53,7 +53,7 @@ const InputWithSelect = ({
         {!loading && value && options && options
           .map(option => <button
             tabIndex={0}
-            onClick={(e) => {
+            onMouseDown={(e) => {
               onChangeHandler(getOptionDisplayValue(option))
               onSelectHandler(getOptionDisplayValue(option))
             }}

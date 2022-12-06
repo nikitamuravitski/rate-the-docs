@@ -1,4 +1,6 @@
 import React, { ChangeEvent } from 'react'
+import { DocVersion } from '../../types/Documentation'
+import inputStyles from '../../styles/input.module.css'
 
 const VersionInput = ({
   errorMessage,
@@ -8,8 +10,8 @@ const VersionInput = ({
 }: {
   errorMessage: string
   label: string
-  value: string
-  onChangeHandler(value: string): void
+  value: DocVersion
+  onChangeHandler(value: DocVersion): void
 }) => {
   const id = label.split(' ').join('').toLowerCase()
   return (
@@ -17,51 +19,25 @@ const VersionInput = ({
       <label htmlFor={id} >{label}</label>
       <div className='w-full max-w-xs flex flex-col'>
         <div className='flex gap-5'>
-          <input
+          {value.map((item, index) => <input
+            key={id + index}
             className={
-              (errorMessage ? "border-orange-400" : "border-stone-700") +
-              " box-border w-full max-w-xs rounded-md bg-[#ffffff29] border-2 border-stone-700 p-3"
+              (errorMessage ? "border-orange-400" : "border-stone-700") + ' ' +
+              inputStyles['input']
             }
             id={id}
             placeholder='X'
             min={0}
             type='number'
-            value={value}
+            value={value[index] || ''}
             onChange={e => {
               const target = e.target as HTMLInputElement
-              onChangeHandler(target.value)
+              value[index] = +target.value
+              if (+target.value === 0) value[index] = null
+              onChangeHandler([...value])
             }}
           />
-          <input
-            className={
-              (errorMessage ? "border-orange-400" : "border-stone-700") +
-              " box-border w-full max-w-xs rounded-md bg-[#ffffff29] border-2 border-stone-700 p-3"
-            }
-            id={id}
-            placeholder='X'
-            min={0}
-            type='number'
-            value={value}
-            onChange={e => {
-              const target = e.target as HTMLInputElement
-              onChangeHandler(target.value)
-            }}
-          />
-          <input
-            className={
-              (errorMessage ? "border-orange-400" : "border-stone-700") +
-              " box-border w-full max-w-xs rounded-md bg-[#ffffff29] border-2 border-stone-700 p-3"
-            }
-            id={id}
-            placeholder='X'
-            min={0}
-            type='number'
-            value={value}
-            onChange={e => {
-              const target = e.target as HTMLInputElement
-              onChangeHandler(target.value)
-            }}
-          />
+          )}
         </div>
         <div className='text-orange-400'>
           {errorMessage}
