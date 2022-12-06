@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import InputWithSelect from '../../components/common/InputWithSelect';
 import { useDebounce } from '../../hooks/useDebounce';
 import { Documentation, DocVersion, Language } from "../../types/Documentation"
@@ -7,20 +7,48 @@ import ChooseLanguage from './Choose';
 import Input from './Input';
 import VersionInput from './VersionInput';
 
+enum fields {
+  name = 'name',
+  description = 'description',
+  linkToDocs = 'linkToDocs',
+  packageName = 'packageName',
+  docVersion = 'docVersion',
+  language = 'language'
+}
+
+const messageInitialState = {
+  [fields.name]: '',
+  [fields.description]: '',
+  [fields.linkToDocs]: '',
+  [fields.packageName]: '',
+  [fields.docVersion]: ''
+}
+
 const Form = () => {
   const [name, setName] = useState<string>('')
   const [description, setDescription] = useState<string>('')
   const [linkToDocs, setLinkToDocs] = useState<string>('')
   const [packageName, setPackageName] = useState<string>('')
   const [docVersion, setDocVersion] = useState<DocVersion>([null, null, null])
-  const [message, setMessage] = useState({
-    name: '',
-    description: '',
-    linkToDocs: '',
-    packageName: '',
-    docVersion: ''
-  })
   const [language, setLanguage] = useState<Language>(Language.javascript)
+
+  const setters = useMemo(() => ({
+    [fields.name]: setName,
+    [fields.description]: setDescription,
+    [fields.linkToDocs]: setLinkToDocs,
+    [fields.packageName]: setPackageName,
+    [fields.docVersion]: setDocVersion
+  }), [])
+
+  const [message, setMessage] = useState(messageInitialState)
+
+  const setState = (field: fields, value: any) => {
+    setMessage((old) => {
+      return { ...old, [field]: '' }
+    })
+    setters[field as keyof typeof setters](value)
+  }
+
   const debouncedPackageName: string = useDebounce<string>(packageName, 300);
 
   const createProposalMutation = trpc.documentation.createProposal.useMutation<Documentation>()
@@ -32,13 +60,7 @@ const Form = () => {
   })
 
   const createProposalHandler = async () => {
-    setMessage({
-      name: '',
-      description: '',
-      linkToDocs: '',
-      packageName: '',
-      docVersion: ''
-    })
+    setMessage(messageInitialState)
     createProposalMutation.mutate({ name, description, linkToDocs, packageName, docVersion, language }, {
       onError: ({ message: fetchedMessage }) => {
         setMessage((old) => {
@@ -71,75 +93,45 @@ const Form = () => {
         <ChooseLanguage currentPick={language} onChoose={(lang: Language) => setLanguage(lang)} />
         {language === Language.javascript ?
           <InputWithSelect
-            errorMessage={message.packageName}
+            errorMessage={message[fields.packageName]}
             getOptionDisplayValue={(option) => option.name}
             loading={isPackageDataFetching}
             label='Package name'
-            onChangeHandler={(name) => {
-              setMessage((old) => {
-                return { ...old, packageName: '' }
-              })
-              setPackageName(name)
-            }}
+            onChangeHandler={(value) => setState(fields.packageName, value)}
             onSelectHandler={onSelectPackageHandler}
             value={packageName}
             options={packageData} />
           :
           <Input
-            errorMessage={message.packageName}
+            errorMessage={message[fields.packageName]}
             value={packageName}
-            onChangeHandler={(value) => {
-              setMessage((old) => {
-                return { ...old, packageName: '' }
-              })
-              setPackageName(value)
-            }}
+            onChangeHandler={(value) => setState(fields.packageName, value)}
             label='Package name'
           />
         }
         <Input
-          errorMessage={message.name}
+          errorMessage={message[fields.name]}
           value={name}
-          onChangeHandler={(value) => {
-            setMessage((old) => {
-              return { ...old, name: '' }
-            })
-            setName(value)
-          }}
+          onChangeHandler={(value) => setState(fields.name, value)}
           label='Name'
         />
         <Input
-          errorMessage={message.description}
+          errorMessage={message[fields.description]}
           value={description}
-          onChangeHandler={(value) => {
-            setMessage((old) => {
-              return { ...old, description: '' }
-            })
-            setDescription(value)
-          }}
+          onChangeHandler={(value) => setState(fields.description, value)}
           label='Description'
           multiline
         />
         <Input
-          errorMessage={message.linkToDocs}
+          errorMessage={message[fields.linkToDocs]}
           value={linkToDocs}
-          onChangeHandler={(value) => {
-            setMessage((old) => {
-              return { ...old, linkToDocs: '' }
-            })
-            setLinkToDocs(value)
-          }}
+          onChangeHandler={(value) => setState(fields.linkToDocs, value)}
           label='Link to docs'
         />
         <VersionInput
-          errorMessage={message.docVersion}
+          errorMessage={message[fields.docVersion]}
           value={docVersion}
-          onChangeHandler={(value) => {
-            setMessage((old) => {
-              return { ...old, docVersion: '' }
-            })
-            setDocVersion(value)
-          }}
+          onChangeHandler={(value) => setState(fields.docVersion, value)}
           label='Doc version'
         />
         <button
