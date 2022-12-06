@@ -4,21 +4,31 @@ import { prisma } from '../../db/client';
 import { z } from "zod";
 
 import { router, publicProcedure } from "../trpc";
+import { language } from '../../../types/zodTypes';
 
 export const documentationRouter = router({
   createProposal: publicProcedure
     .input(z.object({
-      name: z.string(),
-      description: z.string(),
-      linkToDocs: z.string(),
-      npmPackageName: z.string(),
-      docVersion: z.string(),
-      language: z.union([
-        z.literal(Language.java),
-        z.literal(Language.javascript),
-        z.literal(Language.rust),
-        z.literal(Language.python),
-      ])
+      name: z
+        .string()
+        .min(2, "Name is too short (minimum 2)")
+        .trim(),
+      description: z
+        .string()
+        .min(10, "Description is too short (minimum 10)")
+        .trim(),
+      linkToDocs: z
+        .string()
+        .url()
+        .trim(),
+      packageName: z
+        .string()
+        .min(2, "Package name is too short (minimum 2)")
+        .trim(),
+      docVersion: z
+        .string()
+        .trim(),
+      language
     }))
     .mutation(({ input }) => {
       return prisma.documentation.create({ data: { ...input } })

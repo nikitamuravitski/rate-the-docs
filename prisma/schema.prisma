@@ -63,16 +63,16 @@ model VerificationToken {
 }
 
 model Documentation {
-  id             String              @id @default(auto()) @map("_id") @db.ObjectId
-  name           String
-  description    String
-  linkToDocs     String
-  npmPackageName String
-  docVersion     String
-  status         DocumentationStatus @default(voting)
-  ratings        Rating[]
-  votes          Vote[]
-  language       ForWhatLanguage
+  id          String              @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  linkToDocs  String
+  packageName String
+  docVersion  String
+  status      DocumentationStatus @default(voting)
+  ratings     Rating[]
+  votes       Vote[]
+  language    ForWhatLanguage
 }
 
 model Rating {

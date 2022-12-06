@@ -1,27 +1,64 @@
 import React, { useState } from 'react'
+import InputWithSelect from '../../components/common/InputWithSelect';
+import { useDebounce } from '../../hooks/useDebounce';
 import { Documentation, Language } from "../../types/Documentation"
 import { trpc } from "../../utils/trpc";
 import ChooseLanguage from './Choose';
+import Input from './Input';
+import VersionInput from './VersionInput';
 
 const Form = () => {
   const [name, setName] = useState<string>('')
   const [description, setDescription] = useState<string>('')
   const [linkToDocs, setLinkToDocs] = useState<string>('')
-  const [npmPackageName, setNpmPackageName] = useState<string>('')
-  const [version, setVersion] = useState<string>('')
-  const [message, setMessage] = useState<string>('')
+  const [packageName, setPackageName] = useState<string>('')
+  const [docVersion, setDocVersion] = useState<string>('')
+  const [message, setMessage] = useState({
+    name: '',
+    description: '',
+    linkToDocs: '',
+    packageName: '',
+    docVersion: ''
+  })
   const [language, setLanguage] = useState<Language>(Language.javascript)
+  const debouncedPackageName: string = useDebounce<string>(packageName, 300);
+
   const createProposalMutation = trpc.documentation.createProposal.useMutation<Documentation>()
 
+  const { data: packageData, isFetching: isPackageDataFetching } = trpc.packageInfo.getPackageRegistrySearchInfo.useQuery({
+    query: debouncedPackageName,
+  }, {
+    enabled: language === Language.javascript
+  })
+
   const createProposalHandler = async () => {
-    setMessage('')
-    createProposalMutation.mutate({ name, description, linkToDocs, npmPackageName, docVersion: version, language }, {
-      onError: data => setMessage(data.message),
+    setMessage({
+      name: '',
+      description: '',
+      linkToDocs: '',
+      packageName: '',
+      docVersion: ''
+    })
+    createProposalMutation.mutate({ name, description, linkToDocs, packageName, docVersion, language }, {
+      onError: ({ message: fetchedMessage }) => {
+        setMessage((old) => {
+          const messages = JSON.parse(fetchedMessage)
+          messages.forEach((msg: { message: any, path: string[] }) => {
+            const field = msg.path[0]
+            if (!field) return old
+            old[field as keyof typeof old] = msg.message
+          });
+          return old
+        })
+      },
       onSuccess: data => {
-        setMessage('success')
-        setTimeout(() => setMessage(''), 5000)
+        // some notification here
       }
     })
+  }
+  const onSelectPackageHandler = (packageName: string) => {
+    const pack = packageData.find((pack: any) => pack.name === packageName)
+    setDescription(pack.description)
   }
 
   return (
@@ -29,70 +66,59 @@ const Form = () => {
       <form
         onSubmit={e => {
           e.preventDefault()
-          createProposalHandler()
         }}
         className=" flex flex-col max-w-md w-full gap-5"
+        autoComplete='off'
       >
         <ChooseLanguage currentPick={language} onChoose={(lang: Language) => setLanguage(lang)} />
-        <div className="flex w-full justify-between items-center text-white">
-          <label htmlFor='currentVersionForProposalInput' >Package name</label>
-          <input
-            className="w-full max-w-xs rounded-md bg-[#ffffff29] border border-stone-700 p-3"
-            required
-            autoComplete='off'
-            id='currentVersionForProposalInput'
-            value={npmPackageName}
-            onChange={e => setNpmPackageName(e.target.value)}
+        {language === Language.javascript ?
+          <InputWithSelect
+            errorMessage={message.packageName}
+            getOptionDisplayValue={(option) => option.name}
+            loading={isPackageDataFetching}
+            label='Package name'
+            onChangeHandler={setPackageName}
+            onSelectHandler={onSelectPackageHandler}
+            value={packageName}
+            options={packageData} />
+          :
+          <Input
+            errorMessage={message.packageName}
+            value={packageName}
+            onChangeHandler={(value) => setPackageName(value)}
+            label='Package name'
           />
-        </div>
-        <div className="flex w-full justify-between items-center text-white">
-          <label htmlFor='nameForProposalInput'>Name</label>
-          <input
-            className="w-full max-w-xs rounded-md bg-[#ffffff29] border border-stone-700 p-3"
-            required
-            id='nameForProposalInput'
-            autoComplete='off'
-            type='text'
-            value={name}
-            onChange={e => setName(e.target.value)}
-          />
-        </div>
-        <div className="flex w-full justify-between items-center text-white">
-          <label htmlFor='descriptionForProposalInput'>Description</label>
-          <textarea
-            className="w-full max-w-xs rounded-md bg-[#ffffff29] border border-stone-700 p-3"
-            required
-            id='descriptionForProposalInput'
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-          />
-        </div>
-        <div className="flex w-full justify-between items-center text-white">
-          <label htmlFor='currentVersionForProposalInput' >Link to docs</label>
-          <input
-            className="w-full max-w-xs rounded-md bg-[#ffffff29] border border-stone-700 p-3"
-            required
-            id='currentVersionForProposalInput'
-            autoComplete='off'
-            type='text'
-            value={linkToDocs}
-            onChange={e => setLinkToDocs(e.target.value)}
-          />
-        </div>
-        <div className="flex w-full justify-between items-center text-white">
-          <label htmlFor='currentVersionForProposalInput' >Docs Version</label>
-          <input
-            className="w-full max-w-xs rounded-md bg-[#ffffff29] border border-stone-700 p-3"
-            required
-            id='currentVersionForProposalInput'
-            autoComplete='off'
-            type='text'
-            value={version}
-            onChange={e => setVersion(e.target.value)}
-          />
-        </div>
-        <button type="submit" className="text-white font-semibold text-lg py-2 px-5 bg-gradient-to-r from-purple-400 to-pink-600  rounded-lg w-fit">Submit</button>
-        <div className="text-white">{message}</div>
+        }
+        <Input
+          errorMessage={message.name}
+          value={name}
+          onChangeHandler={(value) => setName(value)}
+          label='Name'
+        />
+        <Input
+          errorMessage={message.description}
+          value={description}
+          onChangeHandler={(value) => setDescription(value)}
+          label='Description'
+        />
+        <Input
+          errorMessage={message.linkToDocs}
+          value={linkToDocs}
+          onChangeHandler={(value) => setLinkToDocs(value)}
+          label='Link to docs'
+        />
+        <Input
+          errorMessage={message.docVersion}
+          value={docVersion}
+          onChangeHandler={(value) => setDocVersion(value)}
+          label='Doc version'
+        />
+        <button
+          className="text-white font-semibold text-lg py-2 px-5 bg-gradient-to-r from-purple-400 to-pink-600  rounded-lg w-fit"
+          onClick={() => createProposalHandler()}
+        >
+          Submit
+        </button>
       </form>
     </div>
   )

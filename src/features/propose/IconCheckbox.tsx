@@ -5,7 +5,7 @@ import styles from './styles.module.css'
 
 const IconRadio = ({ children, name, disabled = false, checked = false }: { children: ReactNode, name: string, disabled?: boolean, checked?: boolean }) => {
   return (<>
-    <input type='radio' checked={checked} id={name} value={name.toLowerCase()} name='language' disabled={disabled} className={styles['checkbox']} />
+    <input type='radio' defaultChecked={checked} id={name} value={name.toLowerCase()} name='language' disabled={disabled} className={styles['checkbox']} />
     <label htmlFor={name}>
       <span className=''>
         {children}
