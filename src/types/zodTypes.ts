@@ -9,14 +9,13 @@ export const language = z.union([
 ])
 
 export const docVersion = z.tuple([
-  z.union([z.number().positive(), z.null()]),
-  z.union([z.number().positive(), z.null()]),
-  z.union([z.number().positive(), z.null()]),
+  z.union([z.number().gte(0), z.null()]),
+  z.union([z.number().gte(0), z.null()]),
+  z.union([z.number().gte(0), z.null()]),
 ])
   .refine((doc) => {
     let isDocVersionValid = true
     doc.forEach((cur, i) => {
-      console.log(i, i < doc.length - 1, cur, typeof cur === null, doc[i + 1] !== null)
       if (i < doc.length - 1 && cur === null && doc[i + 1] !== null) isDocVersionValid = false
     })
     return isDocVersionValid

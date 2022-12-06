@@ -19,24 +19,30 @@ const VersionInput = ({
       <label htmlFor={id} >{label}</label>
       <div className='w-full max-w-xs flex flex-col'>
         <div className='flex gap-5'>
-          {value.map((item, index) => <input
-            key={id + index}
-            className={
-              (errorMessage ? "border-orange-400" : "border-stone-700") + ' ' +
-              inputStyles['input']
-            }
-            id={id}
-            placeholder='X'
-            min={0}
-            type='number'
-            value={value[index] || ''}
-            onChange={e => {
-              const target = e.target as HTMLInputElement
-              value[index] = +target.value
-              if (+target.value === 0) value[index] = null
-              onChangeHandler([...value])
-            }}
-          />
+          {value.map((item, index) => {
+            let calcValue: string | number = ''
+            if (typeof value[index] !== null) calcValue = value[index] as number
+
+            return <input
+              key={id + index}
+              className={
+                (errorMessage ? "border-orange-400" : "border-stone-700") + ' ' +
+                inputStyles['input']
+              }
+              id={id}
+              placeholder='X'
+              min={0}
+              type='number'
+              value={calcValue}
+              onChange={e => {
+                const target = e.target as HTMLInputElement
+                value[index] = +target.value
+                if (e.target.value === '') value[index] = null
+                if (e.target.value === '0') value[index] = 0
+                onChangeHandler([...value])
+              }}
+            />
+          }
           )}
         </div>
         <div className='text-orange-400'>
