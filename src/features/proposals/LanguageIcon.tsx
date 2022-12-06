@@ -6,6 +6,8 @@ import RustIcon from '../../assets/svg/rustIcon.svg'
 
 import { Language } from '../../types/Documentation'
 
+import styles from './style.module.css'
+
 const icons = {
   [Language.javascript]: <JsIcon />,
   [Language.rust]: <RustIcon />,
@@ -14,7 +16,10 @@ const icons = {
 }
 
 const LanguageIcon = ({ language }: { language: `${Language}` }) => {
-  return <div className=' w-[30px] h-[30px] flex justify-center rounded-md overflow-hidden m-0 p-0'>
+  return <div className={
+    styles['iconWrapper'] + ' ' +
+    'w-[30px] h-[30px] flex justify-center rounded-md overflow-hidden m-0 p-0'
+  }>
     {icons[language]}
   </div>
 
