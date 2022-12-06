@@ -12,10 +12,10 @@ export type DocumentationInner = {
   name: string
   description: string
   status: 'voting' | 'declined' | 'accepted'
-  npmPackageName: string
+  packageName: string
   linkToDocs: string
-  docVersion: DocVersion
-  language: Language
+  docVersion: string
+  language: `${Language}`
 }
 
 export type Rating = {
@@ -32,8 +32,8 @@ export type Vote = {
   documentationId: string
 }
 export enum Language {
-  java = 'java',
   javascript = 'javascript',
+  java = 'java',
   rust = 'rust',
   python = 'python'
 }
