@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import InputWithSelect from '../../components/common/InputWithSelect';
 import { useDebounce } from '../../hooks/useDebounce';
-import { Documentation, Language } from "../../types/Documentation"
+import { Documentation, DocVersion, Language } from "../../types/Documentation"
 import { trpc } from "../../utils/trpc";
 import ChooseLanguage from './Choose';
 import Input from './Input';
@@ -12,7 +12,7 @@ const Form = () => {
   const [description, setDescription] = useState<string>('')
   const [linkToDocs, setLinkToDocs] = useState<string>('')
   const [packageName, setPackageName] = useState<string>('')
-  const [docVersion, setDocVersion] = useState<string>('')
+  const [docVersion, setDocVersion] = useState<DocVersion>([null, null, null])
   const [message, setMessage] = useState({
     name: '',
     description: '',
@@ -28,7 +28,7 @@ const Form = () => {
   const { data: packageData, isFetching: isPackageDataFetching } = trpc.packageInfo.getPackageRegistrySearchInfo.useQuery({
     query: debouncedPackageName,
   }, {
-    enabled: language === Language.javascript
+    enabled: !!debouncedPackageName && language === Language.javascript
   })
 
   const createProposalHandler = async () => {
@@ -64,9 +64,7 @@ const Form = () => {
   return (
     <div className="max-w-7xl w-full p-3 self-start flex justify-center">
       <form
-        onSubmit={e => {
-          e.preventDefault()
-        }}
+        onSubmit={e => e.preventDefault()}
         className=" flex flex-col max-w-md w-full gap-5"
         autoComplete='off'
       >
@@ -77,7 +75,12 @@ const Form = () => {
             getOptionDisplayValue={(option) => option.name}
             loading={isPackageDataFetching}
             label='Package name'
-            onChangeHandler={setPackageName}
+            onChangeHandler={(name) => {
+              setMessage((old) => {
+                return { ...old, packageName: '' }
+              })
+              setPackageName(name)
+            }}
             onSelectHandler={onSelectPackageHandler}
             value={packageName}
             options={packageData} />
@@ -85,35 +88,62 @@ const Form = () => {
           <Input
             errorMessage={message.packageName}
             value={packageName}
-            onChangeHandler={(value) => setPackageName(value)}
+            onChangeHandler={(value) => {
+              setMessage((old) => {
+                return { ...old, packageName: '' }
+              })
+              setPackageName(value)
+            }}
             label='Package name'
           />
         }
         <Input
           errorMessage={message.name}
           value={name}
-          onChangeHandler={(value) => setName(value)}
+          onChangeHandler={(value) => {
+            setMessage((old) => {
+              return { ...old, name: '' }
+            })
+            setName(value)
+          }}
           label='Name'
         />
         <Input
           errorMessage={message.description}
           value={description}
-          onChangeHandler={(value) => setDescription(value)}
+          onChangeHandler={(value) => {
+            setMessage((old) => {
+              return { ...old, description: '' }
+            })
+            setDescription(value)
+          }}
           label='Description'
+          multiline
         />
         <Input
           errorMessage={message.linkToDocs}
           value={linkToDocs}
-          onChangeHandler={(value) => setLinkToDocs(value)}
+          onChangeHandler={(value) => {
+            setMessage((old) => {
+              return { ...old, linkToDocs: '' }
+            })
+            setLinkToDocs(value)
+          }}
           label='Link to docs'
         />
-        <Input
+        <VersionInput
           errorMessage={message.docVersion}
           value={docVersion}
-          onChangeHandler={(value) => setDocVersion(value)}
+          onChangeHandler={(value) => {
+            setMessage((old) => {
+              return { ...old, docVersion: '' }
+            })
+            setDocVersion(value)
+          }}
           label='Doc version'
         />
         <button
+          type='button'
           className="text-white font-semibold text-lg py-2 px-5 bg-gradient-to-r from-purple-400 to-pink-600  rounded-lg w-fit"
           onClick={() => createProposalHandler()}
         >
