@@ -16,14 +16,6 @@ enum fields {
   language = 'language'
 }
 
-const messageInitialState = {
-  [fields.name]: '',
-  [fields.description]: '',
-  [fields.linkToDocs]: '',
-  [fields.packageName]: '',
-  [fields.docVersion]: ''
-}
-
 const Form = () => {
   const [name, setName] = useState<string>('')
   const [description, setDescription] = useState<string>('')
@@ -40,9 +32,17 @@ const Form = () => {
     [fields.docVersion]: setDocVersion
   }), [])
 
+  const messageInitialState = useMemo(() => ({
+    [fields.name]: '',
+    [fields.description]: '',
+    [fields.linkToDocs]: '',
+    [fields.packageName]: '',
+    [fields.docVersion]: ''
+  }), [])
+
   const [message, setMessage] = useState(messageInitialState)
 
-  const setState = (field: fields, value: any) => {
+  const setState = (field: `${fields}`, value: any) => {
     setMessage((old) => {
       return { ...old, [field]: '' }
     })
@@ -60,20 +60,20 @@ const Form = () => {
   })
 
   const createProposalHandler = async () => {
-    setMessage(messageInitialState)
     createProposalMutation.mutate({ name, description, linkToDocs, packageName, docVersion, language }, {
       onError: ({ message: fetchedMessage }) => {
-        setMessage((old) => {
-          const messages = JSON.parse(fetchedMessage)
-          messages.forEach((msg: { message: any, path: string[] }) => {
-            const field = msg.path[0]
-            if (!field) return old
-            old[field as keyof typeof old] = msg.message
-          });
-          return old
-        })
+        const messages = JSON.parse(fetchedMessage)
+        const newState = { ...messageInitialState }
+        messages.map((msg: { message: any, path: string[] }) => {
+          if (!msg.path.length) return
+          const field = msg.path[0]
+          if (!field) return newState[field as keyof typeof newState] = ''
+          newState[field as keyof typeof newState] = msg.message
+        });
+        setMessage({ ...newState })
       },
       onSuccess: data => {
+        setMessage({ ...messageInitialState })
         // some notification here
       }
     })

@@ -3,10 +3,12 @@ export default {
   fold: (value: DocVersion): string => {
     return value
       .reverse()
-      .filter(item => item)
+      .filter(item => item !== null)
+      .reverse()
       .join('.')
+
   },
   unfold: (value: string) => {
-    console.log(value)
+    return value
   }
 }
