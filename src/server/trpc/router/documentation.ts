@@ -1,10 +1,10 @@
-import { Language } from './../../../types/Documentation';
 import { protectedProcedure } from '../trpc';
 import { prisma } from '../../db/client';
 import { z } from "zod";
 
 import { router, publicProcedure } from "../trpc";
-import { language } from '../../../types/zodTypes';
+import { docVersion, language } from '../../../types/zodTypes';
+import docVersionHelpers from '../../../utils/docVersionHelpers';
 
 export const documentationRouter = router({
   createProposal: publicProcedure
@@ -25,13 +25,16 @@ export const documentationRouter = router({
         .string()
         .min(2, "Package name is too short (minimum 2)")
         .trim(),
-      docVersion: z
-        .string()
-        .trim(),
+      docVersion,
       language
     }))
     .mutation(({ input }) => {
-      return prisma.documentation.create({ data: { ...input } })
+      return prisma.documentation.create({
+        data: {
+          ...input,
+          docVersion: docVersionHelpers.fold(input.docVersion)
+        }
+      })
     }),
   voteForProposal: protectedProcedure
     .input(z.object({
