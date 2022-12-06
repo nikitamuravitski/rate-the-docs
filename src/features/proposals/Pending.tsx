@@ -10,6 +10,7 @@ import { DocumentatnioWithVotes } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
 import Vote from './Vote'
 import ApproveOrDecline from './ApproveOrDecline'
+import LanguageIcon from './LanguageIcon'
 
 const columnHelper = createColumnHelper<DocumentatnioWithVotes>()
 
@@ -35,6 +36,10 @@ const PendingProposals = () => {
   })
 
   const columns = useMemo(() => [
+    columnHelper.accessor('language', {
+      cell: info => <LanguageIcon language={info.getValue()} />,
+      header: () => ''
+    }),
     columnHelper.accessor('name', {
       cell: info => info.getValue(),
       header: () => 'Name'
@@ -47,7 +52,7 @@ const PendingProposals = () => {
       header: () => 'Link to docs',
       cell: info => <a href={info.getValue()} className='text-purple-400'>here</a>,
     }),
-    columnHelper.accessor('npmPackageName', {
+    columnHelper.accessor('packageName', {
       header: () => 'NPM name',
       cell: info => info.getValue(),
       enableSorting: true,
