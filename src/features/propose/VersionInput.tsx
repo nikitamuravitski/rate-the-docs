@@ -21,8 +21,7 @@ const VersionInput = ({
         <div className='flex gap-5'>
           {value.map((item, index) => {
             let calcValue: string | number = ''
-            if (typeof value[index] !== null) calcValue = value[index] as number
-
+            if (value[index] !== null) calcValue = value[index] as number
             return <input
               key={id + index}
               className={
