@@ -14,8 +14,6 @@ import LanguageIcon from './LanguageIcon'
 
 const columnHelper = createColumnHelper<DocumentatnioWithVotes>()
 
-
-
 const PendingProposals = () => {
   const [{ pageIndex, pageSize }, setPagination] = useState({
     pageIndex: 0,
@@ -92,7 +90,7 @@ const PendingProposals = () => {
 
   return (<div className='flex flex-col self-start gap-3 p-3 items-center w-full'>
     <div className='rounded-3xl overflow-hidden w-full max-w-7xl bg-[#00fffc0a]'>
-      <div className='max-h-[60vh] overflow-auto p-3  backdrop-blur-sm'>
+      <div className='max-h-[60vh] overflow-auto p-3 '>
         <table className=' text-slate-300 w-full '>
           <thead className='sticky top-0'>
             {table.getHeaderGroups().map(headerGroup => (

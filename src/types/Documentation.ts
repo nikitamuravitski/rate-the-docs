@@ -31,6 +31,7 @@ export type Vote = {
   userId: string
   documentationId: string
 }
+
 export enum Language {
   javascript = 'javascript',
   java = 'java',

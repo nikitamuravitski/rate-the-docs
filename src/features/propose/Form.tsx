@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import InputWithSelect from '../../components/common/InputWithSelect';
 import { useDebounce } from '../../hooks/useDebounce';
 import { Documentation, DocVersion, Language } from "../../types/Documentation"
@@ -16,6 +16,14 @@ enum fields {
   language = 'language'
 }
 
+const messageInitialState = {
+  [fields.name]: '',
+  [fields.description]: '',
+  [fields.linkToDocs]: '',
+  [fields.packageName]: '',
+  [fields.docVersion]: ''
+}
+
 const Form = () => {
   const [name, setName] = useState<string>('')
   const [description, setDescription] = useState<string>('')
@@ -24,23 +32,15 @@ const Form = () => {
   const [docVersion, setDocVersion] = useState<DocVersion>([null, null, null])
   const [language, setLanguage] = useState<Language>(Language.javascript)
 
-  const setters = useMemo(() => ({
+  const setters = {
     [fields.name]: setName,
     [fields.description]: setDescription,
     [fields.linkToDocs]: setLinkToDocs,
     [fields.packageName]: setPackageName,
     [fields.docVersion]: setDocVersion
-  }), [])
+  }
 
-  const messageInitialState = useMemo(() => ({
-    [fields.name]: '',
-    [fields.description]: '',
-    [fields.linkToDocs]: '',
-    [fields.packageName]: '',
-    [fields.docVersion]: ''
-  }), [])
-
-  const [message, setMessage] = useState(messageInitialState)
+  const [message, setMessage] = useState({ ...messageInitialState })
 
   const setState = (field: `${fields}`, value: any) => {
     setMessage((old) => {
