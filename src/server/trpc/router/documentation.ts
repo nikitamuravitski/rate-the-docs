@@ -123,7 +123,7 @@ export const documentationRouter = router({
       pageIndex: z.number(),
       field: z.string(),
       pageSize: z.number(),
-      language: language.nullish()
+      language: z.union([language, z.undefined()])
     }))
     .query(async ({ input }) => {
 
@@ -133,11 +133,19 @@ export const documentationRouter = router({
       let filterByLanguage = {}
 
       if (input.field === 'ratings') {
+        let filterByLanguageForCount = {}
 
-        if (language) filterByLanguage = {
-          where: {
-            documentation: {
-              language: input.language
+        if (language) {
+          filterByLanguage = {
+            where: {
+              documentation: {
+                language: input.language
+              }
+            }
+          }
+          filterByLanguageForCount = {
+            language: {
+              equals: input.language
             }
           }
         }
@@ -160,7 +168,26 @@ export const documentationRouter = router({
           ...filterByLanguage
         })
 
-        count = await caller.getDocumentsWithRatingCount()
+        count = await prisma.documentation.count({
+          where: {
+            AND: [
+              {
+                status: 'accepted',
+                ...filterByLanguageForCount
+              },
+              {
+                ratings: {
+                  some: {
+                    value: {
+                      not: undefined
+                    }
+                  }
+                }
+              },
+
+            ]
+          }
+        })
 
         let documentation = await prisma.documentation.findMany({
           where: {
@@ -196,7 +223,8 @@ export const documentationRouter = router({
 
         count = await prisma.documentation.count({
           where: {
-            status: 'accepted'
+            status: 'accepted',
+            ...filterByLanguage
           }
         })
 
@@ -233,27 +261,6 @@ export const documentationRouter = router({
       }
     }),
 
-  getDocumentsWithRatingCount: publicProcedure
-    .query(async () => {
-      const result = await prisma.documentation.count({
-        where: {
-          AND: [
-            { status: 'accepted' },
-            {
-              ratings: {
-                some: {
-                  value: {
-                    not: undefined
-                  }
-                }
-              }
-            }
-          ]
-        }
-      })
-      return result
-    }),
-
   rateDocumentation: protectedProcedure
     .input(z.object({
       value: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
@@ -276,6 +283,3 @@ export const documentationRouter = router({
       })
     }),
 });
-
-
-const caller = documentationRouter.createCaller({ session: null, prisma })
