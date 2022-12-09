@@ -6,7 +6,7 @@ import {
   getCoreRowModel,
   SortingState,
 } from '@tanstack/react-table'
-import { DocumentationWithRatings } from '../../types/Documentation'
+import { DocumentationWithRatings, Language } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
 import Rate from './Rate'
 import LanguageIcon from '../../components/common/LanguageIcon'
@@ -27,7 +27,8 @@ const Ratings = () => {
       direction: sorting[0]!.desc ? 'desc' : 'asc',
       field: sorting[0]!.id,
       pageIndex,
-      pageSize
+      pageSize,
+      language: Language.java
     },
     {
       keepPreviousData: true,

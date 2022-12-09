@@ -122,15 +122,26 @@ export const documentationRouter = router({
       direction: z.union([z.literal('asc'), z.literal('desc')]),
       pageIndex: z.number(),
       field: z.string(),
-      pageSize: z.number()
+      pageSize: z.number(),
+      language: language.nullish()
     }))
     .query(async ({ input }) => {
 
       let count
-      let documentation
       let result
 
+      let filterByLanguage = {}
+
       if (input.field === 'ratings') {
+
+        if (language) filterByLanguage = {
+          where: {
+            documentation: {
+              language: input.language
+            }
+          }
+        }
+
         let avgRatings = await prisma.rating.groupBy({
           by: ['documentationId'],
           skip: input.pageIndex * input.pageSize,
@@ -145,12 +156,13 @@ export const documentationRouter = router({
           },
           _count: {
             documentationId: true
-          }
+          },
+          ...filterByLanguage
         })
 
         count = await caller.getDocumentsWithRatingCount()
 
-        documentation = await prisma.documentation.findMany({
+        let documentation = await prisma.documentation.findMany({
           where: {
             id: {
               in: avgRatings.map(item => item.documentationId)
@@ -177,16 +189,23 @@ export const documentationRouter = router({
           })
 
       } else {
+
+        if (language) filterByLanguage = {
+          language: input.language
+        }
+
         count = await prisma.documentation.count({
           where: {
             status: 'accepted'
           }
         })
-        documentation = await prisma.documentation.findMany({
+
+        let documentation = await prisma.documentation.findMany({
           skip: input.pageIndex * input.pageSize,
           take: input.pageSize,
           where: {
-            status: 'accepted'
+            status: 'accepted',
+            ...filterByLanguage
           },
           orderBy: {
             [input.field]: input.direction
