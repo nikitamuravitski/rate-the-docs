@@ -12,6 +12,7 @@ import LanguageIcon from '../../components/common/LanguageIcon'
 import Table from '../../components/common/Table/Table'
 import Pagination from '../../components/common/Table/Pagination'
 import SearchBar from '../../components/common/SearchBar'
+import { useDebounce } from '../../hooks/useDebounce'
 
 const columnHelper = createColumnHelper<DocumentationWithRatings>()
 
@@ -24,9 +25,12 @@ const Ratings = () => {
     { desc: true, id: 'name' }
   ])
   const [languageFilter, setLanguageFilter] = useState<Language | undefined>()
+  const [searchFilter, setSearchFilter] = useState<string>('')
+  const debouncedSearchFilter = useDebounce(searchFilter, 300)
 
   const documentation = trpc.documentation.getDocumentation.useQuery(
     {
+      searchFilter: debouncedSearchFilter,
       direction: sorting[0]!.desc ? 'desc' : 'asc',
       field: sorting[0]!.id,
       pageIndex,
@@ -83,6 +87,8 @@ const Ratings = () => {
 
   return (<div className='flex flex-col w-full p-3 gap-3 items-center self-start '>
     <SearchBar
+      onSearch={(value) => setSearchFilter(value)}
+      search={searchFilter}
       onChooseLanguage={(lang) => setLanguageFilter(lang)}
       currentLanguage={languageFilter}
     />

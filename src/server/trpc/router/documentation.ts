@@ -119,6 +119,7 @@ export const documentationRouter = router({
 
   getDocumentation: publicProcedure
     .input(z.object({
+      searchFilter: z.string(),
       direction: z.union([z.literal('asc'), z.literal('desc')]),
       pageIndex: z.number(),
       field: z.string(),
@@ -139,6 +140,10 @@ export const documentationRouter = router({
           filterByLanguage = {
             where: {
               documentation: {
+                name: {
+                  contains: input.searchFilter,
+                  mode: 'insensitive'
+                },
                 language: input.language
               }
             }
@@ -173,6 +178,10 @@ export const documentationRouter = router({
             AND: [
               {
                 status: 'accepted',
+                name: {
+                  contains: input.searchFilter,
+                  mode: 'insensitive'
+                },
                 ...filterByLanguageForCount
               },
               {
@@ -223,6 +232,10 @@ export const documentationRouter = router({
 
         count = await prisma.documentation.count({
           where: {
+            name: {
+              contains: input.searchFilter,
+              mode: 'insensitive'
+            },
             status: 'accepted',
             ...filterByLanguage
           }
@@ -233,6 +246,10 @@ export const documentationRouter = router({
           take: input.pageSize,
           where: {
             status: 'accepted',
+            name: {
+              contains: input.searchFilter,
+              mode: 'insensitive'
+            },
             ...filterByLanguage
           },
           orderBy: {
