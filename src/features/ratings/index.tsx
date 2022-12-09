@@ -4,12 +4,12 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  SortingState,
 } from '@tanstack/react-table'
 import { DocumentationWithRatings } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
 import Rate from './Rate'
-
-
+import LanguageIcon from '../../components/common/LanguageIcon'
 
 const columnHelper = createColumnHelper<DocumentationWithRatings>()
 
@@ -18,44 +18,78 @@ const Ratings = () => {
     pageIndex: 0,
     pageSize: 8
   })
+  const [sorting, setSorting] = useState<SortingState>([
+    { desc: true, id: 'name' }
+  ])
 
-  const {
-    data,
-    isFetched: isProposalsFetched,
-    isLoading: isProposalsLoading,
-    refetch: refetchTable,
-  } = trpc.documentation.getDocumentation.useQuery({ pageIndex, pageSize }, {
-    keepPreviousData: true,
-    initialData: {
-      totalPages: 1,
-      pendingProposals: []
-    }
-  })
+
+  const documentation = trpc.documentation.getDocumentation.useQuery(
+    {
+      direction: sorting[0]?.desc ? 'desc' : 'asc',
+      field: sorting[0]?.id || 'name',
+      pageIndex,
+      pageSize
+    },
+    {
+      keepPreviousData: true,
+      initialData: {
+        totalPages: 1,
+        documentation: []
+      },
+      enabled: sorting[0]?.id !== 'ratings'
+    })
+
+  const documentationBySortedRating = trpc.documentation.getDocumentationBySortedRating.useQuery(
+    {
+      direction: sorting[0]?.desc ? 'desc' : 'asc',
+      pageIndex,
+      pageSize
+    },
+    {
+      keepPreviousData: true,
+      initialData: {
+        totalPages: 1,
+        documentation: []
+      },
+      enabled: sorting[0]?.id === 'ratings'
+    })
+
+  const rightDocSet = (sorting[0]?.id === 'ratings' && documentationBySortedRating.data) || documentation.data
 
   const columns = useMemo(() => [
+    columnHelper.accessor('language', {
+      header: () => '',
+      cell: info => <LanguageIcon language={info.getValue()} />,
+      enableSorting: false,
+    }),
     columnHelper.accessor('name', {
+      sortDescFirst: true,
       cell: info => info.getValue(),
       header: () => 'Name'
     }),
     columnHelper.accessor('description', {
       cell: info => info.getValue(),
       header: () => 'Description',
+      enableSorting: false,
     }),
-
     columnHelper.accessor('ratings', {
       header: () => 'Rating',
       cell: info => <Rate key={info.row.original.id} documentationId={info.row.original.id} initialData={info.getValue()} />,
-      enableSorting: true,
     })
+
   ], [])
 
   const table = useReactTable({
-    data: data?.documentation ?? [],
+    data: rightDocSet?.documentation || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
-    pageCount: data?.totalPages ?? 1,
+    onSortingChange: setSorting,
+    enableSortingRemoval: false,
+    pageCount: rightDocSet?.totalPages ?? 1,
+    manualSorting: true,
     state: {
+      sorting,
       pagination: {
         pageSize,
         pageIndex
@@ -65,7 +99,7 @@ const Ratings = () => {
 
   return (<div className='flex flex-col w-full p-3 gap-3 items-center self-start '>
     <div className='rounded-xl overflow-hidden  w-full max-w-7xl m-3 bg-[#00fffc0a]'>
-      <div className='max-h-[70vh] overflow-auto p-3 backdrop-blur-sm'>
+      <div className='max-h-[70vh] overflow-auto p-3'>
         <table className=' text-slate-300 w-full '>
           <thead className='sticky top-0'>
             {table.getHeaderGroups().map(headerGroup => (
@@ -74,10 +108,24 @@ const Ratings = () => {
                   <th key={header.id} className={`${['description', 'name'].includes(header.id) ? 'text-left' : 'text-center'} first:rounded-l-lg last:rounded-r-lg backdrop-brightness-50 text-lg font-medium p-5`}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                      : <div
+                        {...{
+                          className: header.column.getCanSort()
+                            ? 'cursor-pointer select-none'
+                            : '',
+                          onClick: header.column.getToggleSortingHandler(),
+                        }}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                        {{
+                          asc: ' 🔼',
+                          desc: ' 🔽',
+                        }[header.column.getIsSorted() as string]}
+                      </div>
+                    }
                   </th>
                 ))}
               </tr>

@@ -6,6 +6,7 @@ import { router, publicProcedure } from "../trpc";
 import { docVersion, language } from '../../../types/zodTypes';
 import docVersionHelpers from '../../../utils/docVersionHelpers';
 
+
 export const documentationRouter = router({
   createProposal: publicProcedure
     .input(z.object({
@@ -36,6 +37,7 @@ export const documentationRouter = router({
         }
       })
     }),
+
   voteForProposal: protectedProcedure
     .input(z.object({
       value: z.union([z.literal(-1), z.literal(1)]),
@@ -57,6 +59,7 @@ export const documentationRouter = router({
         }
       })
     }),
+
   getPendingProposals: publicProcedure
     .input(z.object({
       pageIndex: z.number(),
@@ -83,6 +86,7 @@ export const documentationRouter = router({
         totalPages, pendingProposals
       }
     }),
+
   approveProposal: publicProcedure
     .input(z.object({
       id: z.string(),
@@ -97,6 +101,7 @@ export const documentationRouter = router({
         }
       })
     }),
+
   declineProposal: publicProcedure
     .input(z.object({
       id: z.string(),
@@ -111,32 +116,129 @@ export const documentationRouter = router({
         }
       })
     }),
+
   getDocumentation: publicProcedure
     .input(z.object({
+      direction: z.union([z.literal('asc'), z.literal('desc')]),
       pageIndex: z.number(),
+      field: z.string(),
       pageSize: z.number()
     }))
     .query(async ({ input }) => {
+
       const count = await prisma.documentation.count({
         where: {
           status: 'accepted'
         }
       })
       const totalPages = Math.ceil(count / input.pageSize)
+      console.log(input)
       const documentation = await prisma.documentation.findMany({
         skip: input.pageIndex * input.pageSize,
         take: input.pageSize,
         where: {
           status: 'accepted'
         },
+        orderBy: {
+          [input.field]: input.direction
+        },
         include: {
           ratings: true
         }
       })
+      const result = documentation.map(doc => {
+        return {
+          ...doc,
+          ratings: {
+            _avg: doc.ratings.reduce((acc, current) => acc += current.value, 0) / doc.ratings.length || null,
+            data: [...doc.ratings]
+          }
+        }
+      })
       return {
-        totalPages, documentation
+        totalPages, documentation: result,
       }
     }),
+
+  getDocumentsWithRatingCount: publicProcedure
+    .query(async () => {
+      const result = await prisma.documentation.count({
+        where: {
+          AND: [
+            { status: 'accepted' },
+            {
+              ratings: {
+                some: {
+                  value: {
+                    not: undefined
+                  }
+                }
+              }
+            }
+          ]
+        }
+      })
+      return result
+    }),
+
+  getDocumentationBySortedRating: publicProcedure
+    .input(z.object({
+      pageIndex: z.number(),
+      pageSize: z.number(),
+      direction: z.union([z.literal('asc'), z.literal('desc')]
+      )
+    }
+
+    ))
+    .query(async ({ input }) => {
+      const avgRatings = await prisma.rating.groupBy({
+        by: ['documentationId'],
+        skip: input.pageIndex * input.pageSize,
+        take: input.pageSize,
+        _avg: {
+          value: true
+        },
+        orderBy: {
+          _avg: {
+            value: input.direction
+          },
+        },
+        _count: {
+          documentationId: true
+        }
+      })
+
+      const documentationList = await prisma.documentation.findMany({
+        where: {
+          id: {
+            in: avgRatings.map(item => item.documentationId)
+          }
+        },
+        include: {
+          ratings: true
+        }
+      })
+      const count: number = await caller.getDocumentsWithRatingCount()
+      const totalPages = Math.ceil(count / input.pageSize)
+
+      const documentation = documentationList
+        .map(doc => {
+          const relatedAvgRating = avgRatings.find(rat => rat.documentationId === doc.id)
+          return {
+            ...doc,
+            ratings: {
+              _avg: relatedAvgRating?._avg.value,
+              data: doc.ratings
+            }
+          }
+        })
+        .sort((a, b) => {
+          return input.direction === 'asc' ? a.ratings._avg! - b.ratings._avg! : b.ratings._avg! - a.ratings._avg!
+        })
+
+      return { totalPages, documentation }
+    }),
+
   rateDocumentation: protectedProcedure
     .input(z.object({
       value: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
@@ -159,3 +261,6 @@ export const documentationRouter = router({
       })
     }),
 });
+
+
+const caller = documentationRouter.createCaller({ session: null, prisma })

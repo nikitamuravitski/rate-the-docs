@@ -10,7 +10,8 @@ import { DocumentatnioWithVotes } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
 import Vote from './Vote'
 import ApproveOrDecline from './ApproveOrDecline'
-import LanguageIcon from './LanguageIcon'
+import LanguageIcon from '../../components/common/LanguageIcon'
+import Link from 'next/link'
 
 const columnHelper = createColumnHelper<DocumentatnioWithVotes>()
 
@@ -48,7 +49,7 @@ const PendingProposals = () => {
     }),
     columnHelper.accessor('linkToDocs', {
       header: () => 'Link to docs',
-      cell: info => <a href={info.getValue()} className='text-purple-400'>here</a>,
+      cell: info => <Link href={info.getValue()} className='text-purple-400'>here</Link>,
     }),
     columnHelper.accessor('packageName', {
       header: () => 'NPM name',

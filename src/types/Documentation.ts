@@ -3,7 +3,7 @@ import { docVersion } from './zodTypes'
 
 export type DocVersion = z.infer<typeof docVersion>
 
-export type DocumentationWithRatings = DocumentationInner & { ratings: Rating[] }
+export type DocumentationWithRatings = DocumentationInner & { ratings: { _avg: number | null | undefined, data: Rating[] } }
 export type DocumentatnioWithVotes = DocumentationInner & { votes: Vote[] }
 export type Documentation = DocumentationWithRatings | DocumentatnioWithVotes
 

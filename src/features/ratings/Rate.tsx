@@ -4,7 +4,10 @@ import { Rating } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
 
 type RateComponent = {
-  initialData: Rating[],
+  initialData: {
+    _avg: number | null | undefined,
+    data: Rating[]
+  },
   documentationId: string
 }
 
@@ -13,22 +16,12 @@ const Rate = ({
   documentationId
 }: RateComponent) => {
   const [errorMessage, setErrorMessage] = useState('')
-  const [rates, setRates] = useState(
-    initialData
-      .filter(item => item.documentationId === documentationId)
-  )
+  const [rates, setRates] = useState(initialData.data)
   const [currentUserRating, setCurrentUserRating] = useState<Rating | null>(null)
 
   const { data: session } = useSession()
 
   const rateDocumentMutation = trpc.documentation.rateDocumentation.useMutation()
-
-  const totalRate = useMemo(() => {
-    if (rates.length) {
-      return (rates.reduce((acc, current) => acc += current.value, 0) / rates.length).toFixed(2)
-    }
-    return 0
-  }, [rates])
 
   useEffect(() => {
     if (session?.user?.id && rates.length) {
@@ -59,7 +52,7 @@ const Rate = ({
         <button onClick={() => rateDocumentHandler(5)}>5</button>
       </>
       }
-      <div className='rounded-md bg-green-700 text-white px-3'>{totalRate}</div>
+      <div className='rounded-md bg-green-700 text-white px-3'>{initialData._avg || 0}</div>
     </div>
     <div >{errorMessage}</div>
   </div>
