@@ -1,5 +1,5 @@
+import { prisma } from './../../db/client';
 import { protectedProcedure } from '../trpc';
-import { prisma } from '../../db/client';
 import { z } from "zod";
 
 import { router, publicProcedure } from "../trpc";
@@ -126,35 +126,89 @@ export const documentationRouter = router({
     }))
     .query(async ({ input }) => {
 
-      const count = await prisma.documentation.count({
-        where: {
-          status: 'accepted'
-        }
-      })
-      const totalPages = Math.ceil(count / input.pageSize)
-      console.log(input)
-      const documentation = await prisma.documentation.findMany({
-        skip: input.pageIndex * input.pageSize,
-        take: input.pageSize,
-        where: {
-          status: 'accepted'
-        },
-        orderBy: {
-          [input.field]: input.direction
-        },
-        include: {
-          ratings: true
-        }
-      })
-      const result = documentation.map(doc => {
-        return {
-          ...doc,
-          ratings: {
-            _avg: doc.ratings.reduce((acc, current) => acc += current.value, 0) / doc.ratings.length || null,
-            data: [...doc.ratings]
+      let count
+      let documentation
+      let result
+
+      if (input.field === 'ratings') {
+        let avgRatings = await prisma.rating.groupBy({
+          by: ['documentationId'],
+          skip: input.pageIndex * input.pageSize,
+          take: input.pageSize,
+          _avg: {
+            value: true
+          },
+          orderBy: {
+            _avg: {
+              value: input.direction
+            },
+          },
+          _count: {
+            documentationId: true
           }
-        }
-      })
+        })
+
+        count = await caller.getDocumentsWithRatingCount()
+
+        documentation = await prisma.documentation.findMany({
+          where: {
+            id: {
+              in: avgRatings.map(item => item.documentationId)
+            }
+          },
+          include: {
+            ratings: true
+          }
+        })
+
+        result = documentation
+          .map(doc => {
+            const relatedAvgRating = avgRatings.find(rat => rat.documentationId === doc.id)
+            return {
+              ...doc,
+              ratings: {
+                _avg: relatedAvgRating?._avg.value,
+                data: doc.ratings
+              }
+            }
+          })
+          .sort((a, b) => {
+            return input.direction === 'asc' ? a.ratings._avg! - b.ratings._avg! : b.ratings._avg! - a.ratings._avg!
+          })
+
+      } else {
+        count = await prisma.documentation.count({
+          where: {
+            status: 'accepted'
+          }
+        })
+        documentation = await prisma.documentation.findMany({
+          skip: input.pageIndex * input.pageSize,
+          take: input.pageSize,
+          where: {
+            status: 'accepted'
+          },
+          orderBy: {
+            [input.field]: input.direction
+          },
+          include: {
+            ratings: true
+          }
+        })
+
+        result = documentation.map(doc => {
+          return {
+            ...doc,
+            ratings: {
+              _avg: doc.ratings.reduce((acc, current) => acc += current.value, 0) / doc.ratings.length || null,
+              data: [...doc.ratings]
+            }
+          }
+        })
+      }
+
+      const totalPages = Math.ceil(count / input.pageSize)
+
       return {
         totalPages, documentation: result,
       }
@@ -179,64 +233,6 @@ export const documentationRouter = router({
         }
       })
       return result
-    }),
-
-  getDocumentationBySortedRating: publicProcedure
-    .input(z.object({
-      pageIndex: z.number(),
-      pageSize: z.number(),
-      direction: z.union([z.literal('asc'), z.literal('desc')]
-      )
-    }
-
-    ))
-    .query(async ({ input }) => {
-      const avgRatings = await prisma.rating.groupBy({
-        by: ['documentationId'],
-        skip: input.pageIndex * input.pageSize,
-        take: input.pageSize,
-        _avg: {
-          value: true
-        },
-        orderBy: {
-          _avg: {
-            value: input.direction
-          },
-        },
-        _count: {
-          documentationId: true
-        }
-      })
-
-      const documentationList = await prisma.documentation.findMany({
-        where: {
-          id: {
-            in: avgRatings.map(item => item.documentationId)
-          }
-        },
-        include: {
-          ratings: true
-        }
-      })
-      const count: number = await caller.getDocumentsWithRatingCount()
-      const totalPages = Math.ceil(count / input.pageSize)
-
-      const documentation = documentationList
-        .map(doc => {
-          const relatedAvgRating = avgRatings.find(rat => rat.documentationId === doc.id)
-          return {
-            ...doc,
-            ratings: {
-              _avg: relatedAvgRating?._avg.value,
-              data: doc.ratings
-            }
-          }
-        })
-        .sort((a, b) => {
-          return input.direction === 'asc' ? a.ratings._avg! - b.ratings._avg! : b.ratings._avg! - a.ratings._avg!
-        })
-
-      return { totalPages, documentation }
     }),
 
   rateDocumentation: protectedProcedure

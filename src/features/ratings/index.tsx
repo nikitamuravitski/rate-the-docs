@@ -22,11 +22,10 @@ const Ratings = () => {
     { desc: true, id: 'name' }
   ])
 
-
   const documentation = trpc.documentation.getDocumentation.useQuery(
     {
-      direction: sorting[0]?.desc ? 'desc' : 'asc',
-      field: sorting[0]?.id || 'name',
+      direction: sorting[0]!.desc ? 'desc' : 'asc',
+      field: sorting[0]!.id,
       pageIndex,
       pageSize
     },
@@ -36,25 +35,7 @@ const Ratings = () => {
         totalPages: 1,
         documentation: []
       },
-      enabled: sorting[0]?.id !== 'ratings'
     })
-
-  const documentationBySortedRating = trpc.documentation.getDocumentationBySortedRating.useQuery(
-    {
-      direction: sorting[0]?.desc ? 'desc' : 'asc',
-      pageIndex,
-      pageSize
-    },
-    {
-      keepPreviousData: true,
-      initialData: {
-        totalPages: 1,
-        documentation: []
-      },
-      enabled: sorting[0]?.id === 'ratings'
-    })
-
-  const rightDocSet = (sorting[0]?.id === 'ratings' && documentationBySortedRating.data) || documentation.data
 
   const columns = useMemo(() => [
     columnHelper.accessor('language', {
@@ -76,17 +57,16 @@ const Ratings = () => {
       header: () => 'Rating',
       cell: info => <Rate key={info.row.original.id} documentationId={info.row.original.id} initialData={info.getValue()} />,
     })
-
   ], [])
 
   const table = useReactTable({
-    data: rightDocSet?.documentation || [],
+    data: documentation.data?.documentation || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     onSortingChange: setSorting,
     enableSortingRemoval: false,
-    pageCount: rightDocSet?.totalPages ?? 1,
+    pageCount: documentation.data?.totalPages ?? 1,
     manualSorting: true,
     state: {
       sorting,
