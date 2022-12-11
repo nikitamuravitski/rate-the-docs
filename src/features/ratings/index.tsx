@@ -13,6 +13,7 @@ import Table from '../../components/common/Table/Table'
 import Pagination from '../../components/common/Table/Pagination'
 import SearchBar from '../../components/common/SearchBar'
 import { useDebounce } from '../../hooks/useDebounce'
+import Link from 'next/link'
 
 const columnHelper = createColumnHelper<DocumentationWithRatings>()
 
@@ -36,13 +37,6 @@ const Ratings = () => {
       pageIndex,
       pageSize,
       language: languageFilter
-    },
-    {
-      keepPreviousData: true,
-      initialData: {
-        totalPages: 1,
-        documentation: []
-      },
     })
 
   const columns = useMemo(() => [
@@ -59,6 +53,17 @@ const Ratings = () => {
     columnHelper.accessor('description', {
       cell: info => info.getValue(),
       header: () => 'Description',
+      enableSorting: false,
+    }),
+    columnHelper.accessor('linkToDocs', {
+      cell: info => <Link
+        target={'_blank'}
+        href={info.getValue()}
+        className='text-purple-400'
+      >
+        here
+      </Link>,
+      header: () => 'Link',
       enableSorting: false,
     }),
     columnHelper.accessor('ratings', {
@@ -92,7 +97,7 @@ const Ratings = () => {
       onChooseLanguage={(lang) => setLanguageFilter(lang)}
       currentLanguage={languageFilter}
     />
-    <Table table={table} />
+    <Table isLoading={documentation.isLoading} table={table} />
     <Pagination table={table} pageIndex={pageIndex} pageSize={pageSize} setPagination={setPagination} />
   </div>
   )

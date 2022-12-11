@@ -1,8 +1,8 @@
 import React from 'react'
 import { flexRender, Table } from '@tanstack/react-table'
-import { DocumentationWithRatings } from '../../../types/Documentation'
+import Loader from '../Loader'
 
-const Table = ({ table }: { table: Table<any> }) => {
+const Table = ({ table, isLoading }: { table: Table<any>, isLoading: boolean }) => {
   return (
     <div className='rounded-xl overflow-hidden  w-full max-w-7xl m-3 bg-[#00fffc0a]'>
       <div className='max-h-[70vh] overflow-auto p-3'>
@@ -38,20 +38,31 @@ const Table = ({ table }: { table: Table<any> }) => {
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map(row => (
-              <tr key={row.id} className='border-t-[1px] first:border-0 border-t-slate-600'>
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className={`${['description', 'name'].includes(cell.column.id) ? '' : 'text-center'} p-5`}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+            {isLoading
+              ?
+              <tr>
+                <td colSpan={20} align='center' className='p-3'>
+                  <Loader />
+                </td>
               </tr>
-            )
-            )}
+              :
+              <>
+                {table.getRowModel().rows.map(row => (
+                  <tr key={row.id} className='border-t-[1px] first:border-0 border-t-slate-600 hover:backdrop-brightness-125'>
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className={`${['description', 'name'].includes(cell.column.id) ? '' : 'text-center'} p-5`}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </>
+            }
+
           </tbody>
         </table>
       </div>
-    </div>
+    </div >
   )
 }
 

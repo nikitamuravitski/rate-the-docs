@@ -49,7 +49,13 @@ const PendingProposals = () => {
     }),
     columnHelper.accessor('linkToDocs', {
       header: () => 'Link to docs',
-      cell: info => <Link href={info.getValue()} className='text-purple-400'>here</Link>,
+      cell: info => <Link
+        target={'_blank'}
+        href={info.getValue()}
+        className='text-purple-400'
+      >
+        here
+      </Link>,
     }),
     columnHelper.accessor('packageName', {
       header: () => 'NPM name',
