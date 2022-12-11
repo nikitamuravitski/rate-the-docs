@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import ChooseLanguage from '../../features/propose/ChooseLanguage'
+import ChooseLanguage from './ChooseLanguage'
 import { Language } from '../../types/Documentation'
 
 const SearchBar = ({

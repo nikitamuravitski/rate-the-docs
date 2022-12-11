@@ -3,7 +3,7 @@ import JsIcon from '../../assets/svg/jsIcon.svg'
 import PythonIcon from '../../assets/svg/pythonIcon.svg'
 import JavaIcon from '../../assets/svg/javaIcon.svg'
 import RustIcon from '../../assets/svg/rustIcon.svg'
-import IconRadio from './IconCheckbox'
+import IconRadio from '../../features/propose/IconCheckbox'
 import { Language } from '../../types/Documentation'
 
 
