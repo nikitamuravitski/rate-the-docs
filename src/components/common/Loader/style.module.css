@@ -1,0 +1,37 @@
+.loader {
+  @apply flex flex-col gap-1 w-fit;
+}
+
+.row {
+  @apply rounded-full h-1 w-10 relative overflow-hidden;
+}
+
+.thumb {
+  @apply rounded-full w-7 h-1 absolute top-0 left-[-100%];
+}
+
+.yellow {
+  @apply bg-yellow-400;
+  animation: slideToLeft 800ms ease-in-out 100ms infinite forwards;
+}
+
+.green {
+  @apply bg-green-400;
+  animation: slideToLeft 800ms ease-in-out infinite forwards;
+}
+
+.red {
+  @apply bg-red-400;
+  animation: slideToLeft 800ms ease-in-out 180ms infinite forwards;
+}
+
+@keyframes slideToLeft {
+  0% {
+    left: -90%
+  }
+
+  100% {
+    left: 100%
+  }
+
+}

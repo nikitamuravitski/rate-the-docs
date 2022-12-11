@@ -3,7 +3,7 @@ import InputWithSelect from '../../components/common/InputWithSelect';
 import { useDebounce } from '../../hooks/useDebounce';
 import { Documentation, DocVersion, Language } from "../../types/Documentation"
 import { trpc } from "../../utils/trpc";
-import ChooseLanguage from './Choose';
+import ChooseLanguage from '../../components/common/ChooseLanguage';
 import Input from './Input';
 import VersionInput from './VersionInput';
 

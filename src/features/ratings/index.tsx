@@ -2,14 +2,18 @@ import React, { useMemo, useState } from 'react'
 import {
   useReactTable,
   createColumnHelper,
-  flexRender,
   getCoreRowModel,
+  SortingState,
 } from '@tanstack/react-table'
-import { DocumentationWithRatings } from '../../types/Documentation'
+import { DocumentationWithRatings, Language } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
 import Rate from './Rate'
-
-
+import LanguageIcon from '../../components/common/LanguageIcon'
+import Table from '../../components/common/Table/Table'
+import Pagination from '../../components/common/Table/Pagination'
+import SearchBar from '../../components/common/SearchBar'
+import { useDebounce } from '../../hooks/useDebounce'
+import Link from 'next/link'
 
 const columnHelper = createColumnHelper<DocumentationWithRatings>()
 
@@ -18,44 +22,67 @@ const Ratings = () => {
     pageIndex: 0,
     pageSize: 8
   })
+  const [sorting, setSorting] = useState<SortingState>([
+    { desc: true, id: 'name' }
+  ])
+  const [languageFilter, setLanguageFilter] = useState<Language | undefined>()
+  const [searchFilter, setSearchFilter] = useState<string>('')
+  const debouncedSearchFilter = useDebounce(searchFilter, 300)
 
-  const {
-    data,
-    isFetched: isProposalsFetched,
-    isLoading: isProposalsLoading,
-    refetch: refetchTable,
-  } = trpc.documentation.getDocumentation.useQuery({ pageIndex, pageSize }, {
-    keepPreviousData: true,
-    initialData: {
-      totalPages: 1,
-      pendingProposals: []
-    }
-  })
+  const documentation = trpc.documentation.getDocumentation.useQuery(
+    {
+      searchFilter: debouncedSearchFilter,
+      direction: sorting[0]!.desc ? 'desc' : 'asc',
+      field: sorting[0]!.id,
+      pageIndex,
+      pageSize,
+      language: languageFilter
+    })
 
   const columns = useMemo(() => [
+    columnHelper.accessor('language', {
+      header: () => '',
+      cell: info => <LanguageIcon language={info.getValue()} />,
+      enableSorting: false,
+    }),
     columnHelper.accessor('name', {
+      sortDescFirst: true,
       cell: info => info.getValue(),
       header: () => 'Name'
     }),
     columnHelper.accessor('description', {
       cell: info => info.getValue(),
       header: () => 'Description',
+      enableSorting: false,
     }),
-
+    columnHelper.accessor('linkToDocs', {
+      cell: info => <Link
+        target={'_blank'}
+        href={info.getValue()}
+        className='text-purple-400'
+      >
+        here
+      </Link>,
+      header: () => 'Link',
+      enableSorting: false,
+    }),
     columnHelper.accessor('ratings', {
       header: () => 'Rating',
       cell: info => <Rate key={info.row.original.id} documentationId={info.row.original.id} initialData={info.getValue()} />,
-      enableSorting: true,
     })
   ], [])
 
   const table = useReactTable({
-    data: data?.documentation ?? [],
+    data: documentation.data?.documentation || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
-    pageCount: data?.totalPages ?? 1,
+    onSortingChange: setSorting,
+    enableSortingRemoval: false,
+    pageCount: documentation.data?.totalPages ?? 1,
+    manualSorting: true,
     state: {
+      sorting,
       pagination: {
         pageSize,
         pageIndex
@@ -64,77 +91,14 @@ const Ratings = () => {
   })
 
   return (<div className='flex flex-col w-full p-3 gap-3 items-center self-start '>
-    <div className='rounded-xl overflow-hidden  w-full max-w-7xl m-3 bg-[#00fffc0a]'>
-      <div className='max-h-[70vh] overflow-auto p-3 backdrop-blur-sm'>
-        <table className=' text-slate-300 w-full '>
-          <thead className='sticky top-0'>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id} className='bg-gradient-to-r from-[#00dade60] to-[#a855f760] backdrop-blur-sm '>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id} className={`${['description', 'name'].includes(header.id) ? 'text-left' : 'text-center'} first:rounded-l-lg last:rounded-r-lg backdrop-brightness-50 text-lg font-medium p-5`}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map(row => (
-              <tr key={row.id} className='border-t-[1px] first:border-0 border-t-slate-600'>
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className={`${['description', 'name'].includes(cell.column.id) ? '' : 'text-center'} p-5`}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            )
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    {/* pagination */}
-
-    <div className='text-white flex gap-3'>
-      <span>Total pages: {table.getPageCount()}</span>
-      <span>Page: {pageIndex + 1}</span>
-      Show: <select
-        className='bg-slate-600'
-        value={pageSize}
-        onChange={e => {
-          setPagination({
-            pageIndex,
-            pageSize: +e.target.value
-          })
-        }}
-      >
-        {
-          [8, 20, 30, 40, 50].map(value => <option key={value} value={value}>{value}</option>)
-        }
-      </select>
-      <button
-        disabled={!table.getCanPreviousPage()}
-        onClick={() => setPagination({
-          pageSize,
-          pageIndex: pageIndex - 1,
-        })}>
-        {'<'}
-      </button>
-      <button
-        disabled={!table.getCanNextPage()}
-        onClick={() => setPagination({
-          pageSize,
-          pageIndex: pageIndex + 1,
-        })}>
-        {'>'}
-      </button>
-    </div>
+    <SearchBar
+      onSearch={(value) => setSearchFilter(value)}
+      search={searchFilter}
+      onChooseLanguage={(lang) => setLanguageFilter(lang)}
+      currentLanguage={languageFilter}
+    />
+    <Table isLoading={documentation.isLoading} table={table} />
+    <Pagination table={table} pageIndex={pageIndex} pageSize={pageSize} setPagination={setPagination} />
   </div>
   )
 }

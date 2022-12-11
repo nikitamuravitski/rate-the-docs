@@ -1,10 +1,11 @@
+import { prisma } from './../../db/client';
 import { protectedProcedure } from '../trpc';
-import { prisma } from '../../db/client';
 import { z } from "zod";
 
 import { router, publicProcedure } from "../trpc";
 import { docVersion, language } from '../../../types/zodTypes';
 import docVersionHelpers from '../../../utils/docVersionHelpers';
+
 
 export const documentationRouter = router({
   createProposal: publicProcedure
@@ -36,6 +37,7 @@ export const documentationRouter = router({
         }
       })
     }),
+
   voteForProposal: protectedProcedure
     .input(z.object({
       value: z.union([z.literal(-1), z.literal(1)]),
@@ -57,6 +59,7 @@ export const documentationRouter = router({
         }
       })
     }),
+
   getPendingProposals: publicProcedure
     .input(z.object({
       pageIndex: z.number(),
@@ -83,6 +86,7 @@ export const documentationRouter = router({
         totalPages, pendingProposals
       }
     }),
+
   approveProposal: publicProcedure
     .input(z.object({
       id: z.string(),
@@ -97,6 +101,7 @@ export const documentationRouter = router({
         }
       })
     }),
+
   declineProposal: publicProcedure
     .input(z.object({
       id: z.string(),
@@ -111,32 +116,168 @@ export const documentationRouter = router({
         }
       })
     }),
+
   getDocumentation: publicProcedure
     .input(z.object({
+      searchFilter: z.string(),
+      direction: z.union([z.literal('asc'), z.literal('desc')]),
       pageIndex: z.number(),
-      pageSize: z.number()
+      field: z.string(),
+      pageSize: z.number(),
+      language: z.union([language, z.undefined()])
     }))
     .query(async ({ input }) => {
-      const count = await prisma.documentation.count({
-        where: {
-          status: 'accepted'
+
+      let count
+      let result
+
+      let filterByLanguage = {}
+
+      if (input.field === 'ratings') {
+        let filterByLanguageForCount = {}
+
+        if (language) {
+          filterByLanguage = {
+            where: {
+              documentation: {
+                name: {
+                  contains: input.searchFilter,
+                  mode: 'insensitive'
+                },
+                language: input.language
+              }
+            }
+          }
+          filterByLanguageForCount = {
+            language: {
+              equals: input.language
+            }
+          }
         }
-      })
+
+        let avgRatings = await prisma.rating.groupBy({
+          by: ['documentationId'],
+          skip: input.pageIndex * input.pageSize,
+          take: input.pageSize,
+          _avg: {
+            value: true
+          },
+          orderBy: {
+            _avg: {
+              value: input.direction
+            },
+          },
+          _count: {
+            documentationId: true
+          },
+          ...filterByLanguage
+        })
+
+        count = await prisma.documentation.count({
+          where: {
+            AND: [
+              {
+                status: 'accepted',
+                name: {
+                  contains: input.searchFilter,
+                  mode: 'insensitive'
+                },
+                ...filterByLanguageForCount
+              },
+              {
+                ratings: {
+                  some: {
+                    value: {
+                      not: undefined
+                    }
+                  }
+                }
+              },
+
+            ]
+          }
+        })
+
+        let documentation = await prisma.documentation.findMany({
+          where: {
+            id: {
+              in: avgRatings.map(item => item.documentationId)
+            }
+          },
+          include: {
+            ratings: true
+          }
+        })
+
+        result = documentation
+          .map(doc => {
+            const relatedAvgRating = avgRatings.find(rat => rat.documentationId === doc.id)
+            return {
+              ...doc,
+              ratings: {
+                _avg: relatedAvgRating?._avg.value,
+                data: doc.ratings
+              }
+            }
+          })
+          .sort((a, b) => {
+            return input.direction === 'asc' ? a.ratings._avg! - b.ratings._avg! : b.ratings._avg! - a.ratings._avg!
+          })
+
+      } else {
+
+        if (language) filterByLanguage = {
+          language: input.language
+        }
+
+        count = await prisma.documentation.count({
+          where: {
+            name: {
+              contains: input.searchFilter,
+              mode: 'insensitive'
+            },
+            status: 'accepted',
+            ...filterByLanguage
+          }
+        })
+
+        let documentation = await prisma.documentation.findMany({
+          skip: input.pageIndex * input.pageSize,
+          take: input.pageSize,
+          where: {
+            status: 'accepted',
+            name: {
+              contains: input.searchFilter,
+              mode: 'insensitive'
+            },
+            ...filterByLanguage
+          },
+          orderBy: {
+            [input.field]: input.direction
+          },
+          include: {
+            ratings: true
+          }
+        })
+
+        result = documentation.map(doc => {
+          return {
+            ...doc,
+            ratings: {
+              _avg: doc.ratings.reduce((acc, current) => acc += current.value, 0) / doc.ratings.length || null,
+              data: [...doc.ratings]
+            }
+          }
+        })
+      }
+
       const totalPages = Math.ceil(count / input.pageSize)
-      const documentation = await prisma.documentation.findMany({
-        skip: input.pageIndex * input.pageSize,
-        take: input.pageSize,
-        where: {
-          status: 'accepted'
-        },
-        include: {
-          ratings: true
-        }
-      })
+
       return {
-        totalPages, documentation
+        totalPages, documentation: result,
       }
     }),
+
   rateDocumentation: protectedProcedure
     .input(z.object({
       value: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
