@@ -63,16 +63,25 @@ model VerificationToken {
 }
 
 model Documentation {
-  id          String              @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String
-  linkToDocs  String
-  packageName String
-  docVersion  String
-  status      DocumentationStatus @default(voting)
-  ratings     Rating[]
-  votes       Vote[]
-  language    ForWhatLanguage
+  id            String                   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  description   String
+  linkToDocs    String
+  packageName   String
+  docVersion    String
+  status        DocumentationStatus      @default(voting)
+  ratings       Rating[]
+  votes         Vote[]
+  language      ForWhatLanguage
+  ratingSummary DocumentationWithRating?
+}
+
+model DocumentationWithRating {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  avg             Int
+  quantity        Int[]
+  documentation   Documentation @relation(fields: [documentationId], references: [id])
+  documentationId String        @unique @db.ObjectId
 }
 
 model Rating {
