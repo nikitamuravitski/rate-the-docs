@@ -10,7 +10,7 @@
 }
 
 .checkbox:not(:checked)+label>span>svg {
-  filter: grayscale(1) ;
+  filter: grayscale(1);
   opacity: 0.5;
   transition: opacity 80ms ease-in-out;
 }
@@ -29,8 +29,7 @@
 }
 
 .checkbox:focus-visible+label>span {
-  @apply rounded-sm;
-  outline: 2px solid blue;
+  @apply rounded-md outline outline-offset-2;
 }
 
 .checkbox+label {
