@@ -1,0 +1,11 @@
+.red {
+  @apply stroke-red-300 fill-red-400;
+}
+
+.yellow {
+  @apply stroke-yellow-300 fill-yellow-400;
+}
+
+.green {
+  @apply stroke-green-300 fill-green-400;
+}

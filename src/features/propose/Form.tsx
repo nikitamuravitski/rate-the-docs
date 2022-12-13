@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import InputWithSelect from '../../components/common/InputWithSelect';
 import { useDebounce } from '../../hooks/useDebounce';
-import { Documentation, DocVersion, Language } from "../../types/Documentation"
+import { DocVersion, Language } from "../../types/Documentation"
 import { trpc } from "../../utils/trpc";
 import ChooseLanguage from '../../components/common/ChooseLanguage';
 import Input from './Input';
@@ -51,7 +51,7 @@ const Form = () => {
 
   const debouncedPackageName: string = useDebounce<string>(packageName, 300);
 
-  const createProposalMutation = trpc.documentation.createProposal.useMutation<Documentation>()
+  const createProposalMutation = trpc.documentation.createProposal.useMutation()
 
   const { data: packageData, isFetching: isPackageDataFetching } = trpc.packageInfo.getPackageRegistrySearchInfo.useQuery({
     query: debouncedPackageName,

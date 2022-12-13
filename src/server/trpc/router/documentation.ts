@@ -5,6 +5,7 @@ import { z } from "zod";
 import { router, publicProcedure } from "../trpc";
 import { docVersion, language } from '../../../types/zodTypes';
 import docVersionHelpers from '../../../utils/docVersionHelpers';
+import { Prisma } from '@prisma/client';
 
 
 export const documentationRouter = router({
@@ -91,8 +92,8 @@ export const documentationRouter = router({
     .input(z.object({
       id: z.string(),
     }))
-    .mutation(({ input }) => {
-      return prisma.documentation.update({
+    .mutation(async ({ input }) => {
+      const documentation = await prisma.documentation.update({
         where: {
           id: input.id
         },
@@ -100,6 +101,19 @@ export const documentationRouter = router({
           status: 'accepted'
         }
       })
+      const rating = await prisma.documentationWithRating.create({
+        data: {
+          documentationId: input.id,
+          avg: 0,
+          one: 0,
+          two: 0,
+          three: 0,
+          four: 0,
+          five: 0,
+          total: 0,
+        }
+      })
+      return documentation
     }),
 
   declineProposal: publicProcedure
@@ -126,156 +140,69 @@ export const documentationRouter = router({
       pageSize: z.number(),
       language: z.union([language, z.undefined()])
     }))
-    .query(async ({ input }) => {
-
-      let count
-      let result
-
-      let filterByLanguage = {}
-
-      if (input.field === 'ratings') {
-        let filterByLanguageForCount = {}
-
-        if (language) {
-          filterByLanguage = {
-            where: {
-              documentation: {
-                name: {
-                  contains: input.searchFilter,
-                  mode: 'insensitive'
-                },
-                language: input.language
-              }
+    .query(async ({ input, ctx }) => {
+      const documentation = await prisma.documentation.findMany({
+        skip: input.pageIndex * input.pageSize,
+        take: input.pageSize,
+        orderBy: input.field === 'ratingSummary' ?
+          {
+            ratingSummary: {
+              avg: input.direction
             }
           }
-          filterByLanguageForCount = {
-            language: {
-              equals: input.language
-            }
-          }
-        }
-
-        let avgRatings = await prisma.rating.groupBy({
-          by: ['documentationId'],
-          skip: input.pageIndex * input.pageSize,
-          take: input.pageSize,
-          _avg: {
-            value: true
-          },
-          orderBy: {
-            _avg: {
-              value: input.direction
-            },
-          },
-          _count: {
-            documentationId: true
-          },
-          ...filterByLanguage
-        })
-
-        count = await prisma.documentation.count({
-          where: {
-            AND: [
-              {
-                status: 'accepted',
-                name: {
-                  contains: input.searchFilter,
-                  mode: 'insensitive'
-                },
-                ...filterByLanguageForCount
-              },
-              {
-                ratings: {
-                  some: {
-                    value: {
-                      not: undefined
-                    }
-                  }
-                }
-              },
-
-            ]
-          }
-        })
-
-        let documentation = await prisma.documentation.findMany({
-          where: {
-            id: {
-              in: avgRatings.map(item => item.documentationId)
-            }
-          },
-          include: {
-            ratings: true
-          }
-        })
-
-        result = documentation
-          .map(doc => {
-            const relatedAvgRating = avgRatings.find(rat => rat.documentationId === doc.id)
-            return {
-              ...doc,
-              ratings: {
-                _avg: relatedAvgRating?._avg.value,
-                data: doc.ratings
-              }
-            }
-          })
-          .sort((a, b) => {
-            return input.direction === 'asc' ? a.ratings._avg! - b.ratings._avg! : b.ratings._avg! - a.ratings._avg!
-          })
-
-      } else {
-
-        if (language) filterByLanguage = {
-          language: input.language
-        }
-
-        count = await prisma.documentation.count({
-          where: {
-            name: {
-              contains: input.searchFilter,
-              mode: 'insensitive'
-            },
-            status: 'accepted',
-            ...filterByLanguage
-          }
-        })
-
-        let documentation = await prisma.documentation.findMany({
-          skip: input.pageIndex * input.pageSize,
-          take: input.pageSize,
-          where: {
-            status: 'accepted',
-            name: {
-              contains: input.searchFilter,
-              mode: 'insensitive'
-            },
-            ...filterByLanguage
-          },
-          orderBy: {
+          : {
             [input.field]: input.direction
           },
-          include: {
-            ratings: true
-          }
-        })
-
-        result = documentation.map(doc => {
-          return {
-            ...doc,
-            ratings: {
-              _avg: doc.ratings.reduce((acc, current) => acc += current.value, 0) / doc.ratings.length || null,
-              data: [...doc.ratings]
+        where: {
+          OR: [
+            {
+              name: {
+                contains: input.searchFilter,
+                mode: 'insensitive'
+              }
+            },
+            {
+              packageName: {
+                contains: input.searchFilter,
+                mode: 'insensitive'
+              },
             }
+          ],
+          status: 'accepted',
+          language: input.language ? {
+            equals: input.language
+          } : undefined
+        },
+        include: {
+          ratingSummary: true,
+          ratings: !!ctx.session?.user?.id && {
+            where: {
+              userId: {
+                equals: ctx.session.user.id
+              }
+            },
           }
-        })
-      }
+        }
+      })
+
+      const count = await prisma.documentation.count({
+        where: {
+          status: 'accepted',
+          name: {
+            contains: input.searchFilter || undefined,
+            mode: 'insensitive'
+          },
+          packageName: {
+            contains: input.searchFilter || undefined,
+            mode: 'insensitive'
+          },
+          language: input.language || undefined,
+        }
+      })
 
       const totalPages = Math.ceil(count / input.pageSize)
 
-      return {
-        totalPages, documentation: result,
-      }
+      return { totalPages, documentation }
     }),
 
   rateDocumentation: protectedProcedure
@@ -290,13 +217,54 @@ export const documentationRouter = router({
           documentationId: input.documentationId
         }
       })
+
       if (isUserAlreadyRated) throw new Error('You already rated this')
-      return prisma.rating.create({
-        data: {
-          value: input.value,
-          userId: ctx.session.user.id,
-          documentationId: input.documentationId,
+
+      const documentationWithRating = await prisma.documentationWithRating.findFirst({
+        where: {
+          documentationId: input.documentationId
         }
       })
+
+      let newAvg
+
+      if (documentationWithRating?.avg && documentationWithRating?.total) {
+        newAvg = (documentationWithRating.avg * documentationWithRating.total + input.value) / (documentationWithRating?.total + 1)
+      }
+
+      const variants = {
+        1: 'one',
+        2: 'two',
+        3: 'three',
+        4: 'four',
+        5: 'five'
+      }
+
+      const newRating = await prisma.rating.create({
+        data: {
+          value: input.value,
+          documentationId: input.documentationId,
+          userId: ctx.session.user.id,
+        }
+      })
+
+      const updatedRatingSummary = await prisma.documentationWithRating.update({
+        where: {
+          documentationId: input.documentationId
+        },
+        data: {
+          [variants[input.value]]: {
+            increment: 1
+          },
+          total: {
+            increment: 1
+          },
+          avg: {
+            set: newAvg || input.value
+          }
+        }
+      })
+
+      return { updatedRatingSummary, newRating: [newRating] }
     }),
 });
