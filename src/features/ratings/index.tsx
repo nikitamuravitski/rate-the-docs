@@ -5,17 +5,23 @@ import {
   getCoreRowModel,
   SortingState,
 } from '@tanstack/react-table'
-import { DocumentationWithRatings, Language } from '../../types/Documentation'
+import { Language } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
-import Rate from './Rate'
+import Rating from './Rating'
 import LanguageIcon from '../../components/common/LanguageIcon'
 import Table from '../../components/common/Table/Table'
 import Pagination from '../../components/common/Table/Pagination'
 import SearchBar from '../../components/common/SearchBar'
 import { useDebounce } from '../../hooks/useDebounce'
 import Link from 'next/link'
+import type { Prisma } from '@prisma/client'
 
-const columnHelper = createColumnHelper<DocumentationWithRatings>()
+const columnHelper = createColumnHelper<Prisma.DocumentationGetPayload<{
+  include: {
+    ratingSummary: true,
+    ratings: true
+  }
+}>>()
 
 const Ratings = () => {
   const [{ pageIndex, pageSize }, setPagination] = useState({
@@ -55,6 +61,11 @@ const Ratings = () => {
       header: () => 'Description',
       enableSorting: false,
     }),
+    columnHelper.accessor('docVersion', {
+      cell: info => info.getValue(),
+      header: () => 'Doc version',
+      enableSorting: false,
+    }),
     columnHelper.accessor('linkToDocs', {
       cell: info => <Link
         target={'_blank'}
@@ -66,14 +77,14 @@ const Ratings = () => {
       header: () => 'Link',
       enableSorting: false,
     }),
-    columnHelper.accessor('ratings', {
+    columnHelper.accessor('ratingSummary', {
       header: () => 'Rating',
-      cell: info => <Rate key={info.row.original.id} documentationId={info.row.original.id} initialData={info.getValue()} />,
+      cell: info => <Rating key={info.row.original.id} data={info.getValue()} currentUserRating={info.row.original.ratings} />,
     })
   ], [])
 
   const table = useReactTable({
-    data: documentation.data?.documentation || [],
+    data: documentation.data?.documentation!,
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,

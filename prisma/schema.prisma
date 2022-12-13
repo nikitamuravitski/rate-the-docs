@@ -78,19 +78,26 @@ model Documentation {
 
 model DocumentationWithRating {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  avg             Int
-  quantity        Int[]
+  avg             Float
+  total           Int
+  one             Int
+  two             Int
+  three           Int
+  four            Int
+  five            Int
   documentation   Documentation @relation(fields: [documentationId], references: [id])
   documentationId String        @unique @db.ObjectId
+  ratings         Rating[]
 }
 
 model Rating {
-  id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  value           Int
-  user            User          @relation(fields: [userId], references: [id])
-  userId          String        @db.ObjectId
-  documentation   Documentation @relation(fields: [documentationId], references: [id])
-  documentationId String        @db.ObjectId
+  id                      String                   @id @default(auto()) @map("_id") @db.ObjectId
+  value                   Int
+  user                    User                     @relation(fields: [userId], references: [id])
+  userId                  String                   @db.ObjectId
+  DocumentationWithRating DocumentationWithRating? @relation(fields: [documentationId], references: [documentationId])
+  Documentation           Documentation?           @relation(fields: [documentationId], references: [id])
+  documentationId         String?                  @db.ObjectId
 }
 
 model Vote {

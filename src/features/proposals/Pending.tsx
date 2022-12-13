@@ -6,14 +6,18 @@ import {
   flexRender,
   getCoreRowModel,
 } from '@tanstack/react-table'
-import { DocumentatnioWithVotes } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
 import Vote from './Vote'
 import ApproveOrDecline from './ApproveOrDecline'
 import LanguageIcon from '../../components/common/LanguageIcon'
 import Link from 'next/link'
+import { Prisma } from '@prisma/client'
 
-const columnHelper = createColumnHelper<DocumentatnioWithVotes>()
+const columnHelper = createColumnHelper<Prisma.DocumentationGetPayload<{
+  include: {
+    votes: true
+  }
+}>>()
 
 const PendingProposals = () => {
   const [{ pageIndex, pageSize }, setPagination] = useState({
