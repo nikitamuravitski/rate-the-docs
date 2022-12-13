@@ -28,8 +28,8 @@ const SearchBar = ({
           height="20"
         >
           <title>Search icon</title>
-          <ellipse ry="7.36111" rx="7.36111" id="svg_3" cy="8.36111" cx="8.36111" stroke-width="2" fill="none" />
-          <line id="svg_5" y2="19" x2="19" y1="12.8934" x1="12.8934" stroke-width="2" fill="none" />
+          <ellipse ry="7.36111" rx="7.36111" id="svg_3" cy="8.36111" cx="8.36111" strokeWidth="2" fill="none" />
+          <line id="svg_5" y2="19" x2="19" y1="12.8934" x1="12.8934" strokeWidth="2" fill="none" />
         </svg>
       </div>
       <ChooseLanguage hideLabel includeAll currentPick={currentLanguage} onChoose={onChooseLanguage} />
