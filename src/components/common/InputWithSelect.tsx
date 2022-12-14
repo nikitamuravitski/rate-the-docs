@@ -16,7 +16,7 @@ const InputWithSelect = ({
   value: string
   onChangeHandler(value: string): void
   onSelectHandler(value: string): void
-  options: any[]
+  options: any[] | undefined
   getOptionDisplayValue(value: any): string
   label: string
   loading: boolean
@@ -50,7 +50,7 @@ const InputWithSelect = ({
         {!value && <span className='p-3'>Start typing</span>}
         {value && !loading && !options && <span className='p-3'>Loading</span>}
         {loading && value && <span className='p-3'>Loading</span>}
-        {!loading && value && options && options
+        {!loading && value && options?.length && options
           .map(option => <button
             tabIndex={0}
             onMouseDown={(e) => {
