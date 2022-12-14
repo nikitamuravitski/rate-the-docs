@@ -85,7 +85,7 @@ const Form = () => {
     })
   }
   const onSelectPackageHandler = (packageName: string) => {
-    const pack = packageData!.find((pack) => pack.name === packageName)
+    const pack = packageData!.find((pack: any) => pack.name === packageName)
     setDescription(old => pack.description || old)
     setLinkToRepo(old => pack.links.repository || old)
     setDocVersion(old => docVersionHelpers.unfold(pack.version) || old)
