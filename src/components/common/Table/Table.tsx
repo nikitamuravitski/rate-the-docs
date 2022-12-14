@@ -63,7 +63,7 @@ const Table = ({ table, isLoading }: { table: Table<any>, isLoading: boolean }) 
                       <p className='text-2xl font-semibold text-transparent drop-shadow-xl bg-clip-text bg-gradient-to-r  from-blue-400 to-purple-300 w-fit'>
                         Wow!
                       </p>
-                      <p>Seems like there are no docs for this.</p>
+                      <p>Seems like there are no results.</p>
                       <p>If you have time, please make a <Link href='/propose' className='text-purple-400' >proposal</Link></p>
                     </div>
                   </td>

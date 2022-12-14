@@ -67,6 +67,7 @@ model Documentation {
   name          String
   description   String
   linkToDocs    String
+  linkToRepo    String
   packageName   String
   docVersion    String
   status        DocumentationStatus      @default(voting)

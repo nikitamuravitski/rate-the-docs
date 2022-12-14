@@ -6,11 +6,14 @@ import { trpc } from "../../utils/trpc";
 import ChooseLanguage from '../../components/common/ChooseLanguage';
 import Input from './Input';
 import VersionInput from './VersionInput';
+import docVersionHelpers from '../../utils/docVersionHelpers';
+import Loader from '../../components/common/Loader';
 
 enum fields {
   name = 'name',
   description = 'description',
   linkToDocs = 'linkToDocs',
+  linkToRepo = 'linkToRepo',
   packageName = 'packageName',
   docVersion = 'docVersion',
   language = 'language'
@@ -20,6 +23,7 @@ const messageInitialState = {
   [fields.name]: '',
   [fields.description]: '',
   [fields.linkToDocs]: '',
+  [fields.linkToRepo]: '',
   [fields.packageName]: '',
   [fields.docVersion]: ''
 }
@@ -28,14 +32,18 @@ const Form = () => {
   const [name, setName] = useState<string>('')
   const [description, setDescription] = useState<string>('')
   const [linkToDocs, setLinkToDocs] = useState<string>('')
+  const [linkToRepo, setLinkToRepo] = useState<string>('')
   const [packageName, setPackageName] = useState<string>('')
   const [docVersion, setDocVersion] = useState<DocVersion>([null, null, null])
   const [language, setLanguage] = useState<Language>(Language.javascript)
+
+  const [isLoaderShown, setIsLoaderShown] = useState<boolean>(false)
 
   const setters = {
     [fields.name]: setName,
     [fields.description]: setDescription,
     [fields.linkToDocs]: setLinkToDocs,
+    [fields.linkToRepo]: setLinkToRepo,
     [fields.packageName]: setPackageName,
     [fields.docVersion]: setDocVersion
   }
@@ -51,7 +59,10 @@ const Form = () => {
 
   const debouncedPackageName: string = useDebounce<string>(packageName, 300);
 
-  const createProposalMutation = trpc.documentation.createProposal.useMutation()
+  const createProposalMutation = trpc.documentation.createProposal.useMutation({
+    onError: () => setIsLoaderShown(false),
+    onMutate: () => setIsLoaderShown(true),
+  })
 
   const { data: packageData, isFetching: isPackageDataFetching } = trpc.packageInfo.getPackageRegistrySearchInfo.useQuery({
     query: debouncedPackageName,
@@ -60,7 +71,7 @@ const Form = () => {
   })
 
   const createProposalHandler = async () => {
-    createProposalMutation.mutate({ name, description, linkToDocs, packageName, docVersion, language }, {
+    createProposalMutation.mutate({ name, description, linkToDocs, linkToRepo, packageName, docVersion, language }, {
       onError: ({ message: fetchedMessage }) => {
         const messages = JSON.parse(fetchedMessage)
         const newState = { ...messageInitialState }
@@ -79,10 +90,12 @@ const Form = () => {
     })
   }
   const onSelectPackageHandler = (packageName: string) => {
-    const pack = packageData.find((pack: any) => pack.name === packageName)
-    setDescription(pack.description)
+    const pack = packageData!.find((pack: any) => pack.name === packageName)
+    setState(fields.description, (old: string) => pack.description || old)
+    setState(fields.linkToRepo, (old: string) => pack.links.repository || old)
+    setState(fields.docVersion, (old: DocVersion) => docVersionHelpers.unfold(pack.version) || old)
   }
-
+  console.log(createProposalMutation.status)
   return (
     <div className="max-w-7xl w-full p-3 self-start flex justify-center">
       <form
@@ -128,6 +141,12 @@ const Form = () => {
           onChangeHandler={(value) => setState(fields.linkToDocs, value)}
           label='Link to docs'
         />
+        <Input
+          errorMessage={message[fields.linkToRepo]}
+          value={linkToRepo}
+          onChangeHandler={(value) => setState(fields.linkToRepo, value)}
+          label='Link to Repo'
+        />
         <VersionInput
           errorMessage={message[fields.docVersion]}
           value={docVersion}
@@ -136,11 +155,13 @@ const Form = () => {
         />
         <button
           type='button'
-          className="text-white font-semibold text-lg py-2 px-5 bg-gradient-to-r from-purple-400 to-pink-600  rounded-lg w-fit"
+          disabled={!!createProposalMutation.isLoading}
+          className="flex justify-center text-white font-semibold text-lg py-2 px-5 bg-gradient-to-r from-purple-400 to-pink-600 rounded-lg"
           onClick={() => createProposalHandler()}
         >
           Submit
         </button>
+        {isLoaderShown && <Loader />}
       </form>
     </div>
   )

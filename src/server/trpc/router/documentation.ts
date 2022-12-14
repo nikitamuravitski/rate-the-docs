@@ -5,7 +5,6 @@ import { z } from "zod";
 import { router, publicProcedure } from "../trpc";
 import { docVersion, language } from '../../../types/zodTypes';
 import docVersionHelpers from '../../../utils/docVersionHelpers';
-import { Prisma } from '@prisma/client';
 
 
 export const documentationRouter = router({
@@ -23,6 +22,10 @@ export const documentationRouter = router({
         .string()
         .url()
         .trim(),
+      linkToRepo: z
+        .string()
+        .url()
+        .trim(),
       packageName: z
         .string()
         .min(2, "Package name is too short (minimum 2)")
@@ -30,7 +33,27 @@ export const documentationRouter = router({
       docVersion,
       language
     }))
-    .mutation(({ input }) => {
+    .mutation(async ({ input }) => {
+      const dublicate = await prisma.documentation.findFirst({
+        where: {
+          AND: [
+            {
+              docVersion: docVersionHelpers.fold(input.docVersion)
+            },
+            {
+              packageName: input.packageName
+            },
+            {
+              name: input.name
+            },
+            {
+              language: input.language
+            }
+          ]
+        }
+      })
+
+      if (dublicate) throw new Error('There is a dublicate')
       return prisma.documentation.create({
         data: {
           ...input,
