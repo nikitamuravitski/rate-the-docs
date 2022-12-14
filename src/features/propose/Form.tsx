@@ -37,6 +37,8 @@ const Form = () => {
   const [docVersion, setDocVersion] = useState<DocVersion>([null, null, null])
   const [language, setLanguage] = useState<Language>(Language.javascript)
 
+  const [isLoaderShown, setIsLoaderShown] = useState<boolean>(false)
+
   const setters = {
     [fields.name]: setName,
     [fields.description]: setDescription,
@@ -57,7 +59,10 @@ const Form = () => {
 
   const debouncedPackageName: string = useDebounce<string>(packageName, 300);
 
-  const createProposalMutation = trpc.documentation.createProposal.useMutation()
+  const createProposalMutation = trpc.documentation.createProposal.useMutation({
+    onError: () => setIsLoaderShown(false),
+    onMutate: () => setIsLoaderShown(true),
+  })
 
   const { data: packageData, isFetching: isPackageDataFetching } = trpc.packageInfo.getPackageRegistrySearchInfo.useQuery({
     query: debouncedPackageName,
@@ -86,11 +91,11 @@ const Form = () => {
   }
   const onSelectPackageHandler = (packageName: string) => {
     const pack = packageData!.find((pack: any) => pack.name === packageName)
-    setDescription(old => pack.description || old)
-    setLinkToRepo(old => pack.links.repository || old)
-    setDocVersion(old => docVersionHelpers.unfold(pack.version) || old)
+    setState(fields.description, (old: string) => pack.description || old)
+    setState(fields.linkToRepo, (old: string) => pack.links.repository || old)
+    setState(fields.docVersion, (old: DocVersion) => docVersionHelpers.unfold(pack.version) || old)
   }
-
+  console.log(createProposalMutation.status)
   return (
     <div className="max-w-7xl w-full p-3 self-start flex justify-center">
       <form
@@ -156,7 +161,7 @@ const Form = () => {
         >
           Submit
         </button>
-        {createProposalMutation.isLoading && !createProposalMutation.isError && <Loader />}
+        {isLoaderShown && <Loader />}
       </form>
     </div>
   )

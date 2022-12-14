@@ -45,6 +45,9 @@ export const documentationRouter = router({
             },
             {
               name: input.name
+            },
+            {
+              language: input.language
             }
           ]
         }
