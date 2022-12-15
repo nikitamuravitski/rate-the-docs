@@ -1,3 +1,7 @@
 .input {
   @apply box-border w-full max-w-xs rounded-md bg-[#ffffff19] border-2 p-3 backdrop-blur-[2px];
 }
+
+.input:focus-visible {
+  @apply outline -outline-offset-1 outline-white rounded-md
+}

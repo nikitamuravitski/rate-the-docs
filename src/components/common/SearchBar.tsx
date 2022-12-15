@@ -18,7 +18,7 @@ const SearchBar = ({
     >
       <div className={
         styles['searchbar'] + ' ' +
-        'first-of-type:input relative bg-[#ffffff20] pr-8 text-white rounded-md border border-neutral-500'
+        'relative bg-[#ffffff20] pr-8 text-white rounded-md border border-neutral-500'
       }>
         <input className='bg-transparent p-4 focus:outline-none' value={search} onChange={e => onSearch(e.target.value)} />
         <svg

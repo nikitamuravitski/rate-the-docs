@@ -2,6 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-:focus {
+:focus-visible {
   @apply outline outline-offset-4 outline-gray-50 rounded-md
 }

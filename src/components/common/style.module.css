@@ -4,5 +4,5 @@
 }
 
 .searchbar:has(>input:focus) {
-  @apply outline outline-offset-2
+  @apply outline
 }
