@@ -3,14 +3,14 @@ import { flexRender, Table } from '@tanstack/react-table'
 import Loader from '../Loader'
 import Link from 'next/link'
 
-const Table = ({ table, isLoading }: { table: Table<any>, isLoading: boolean }) => {
+const Table = ({ table, isLoading, isProposal = false }: { table: Table<any>, isLoading: boolean, isProposal?: boolean }) => {
   return (
     <div className='rounded-xl overflow-hidden  w-full max-w-7xl m-3 bg-[#00fffc0a]'>
       <div className='max-h-[70vh] overflow-auto p-3'>
         <table className=' text-slate-300 w-full '>
           <thead className='sticky top-0'>
             {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id} className='bg-gradient-to-r from-[#00dade60] to-[#a855f760] backdrop-blur-sm '>
+              <tr key={headerGroup.id} className='bg-[#a855f760] backdrop-blur-sm'>
                 {headerGroup.headers.map(header => (
                   <th key={header.id} className={`${['description', 'name'].includes(header.id) ? 'text-left' : 'text-center'} first:rounded-l-lg last:rounded-r-lg backdrop-brightness-50 text-lg font-medium p-5`}>
                     {header.isPlaceholder
@@ -58,7 +58,13 @@ const Table = ({ table, isLoading }: { table: Table<any>, isLoading: boolean }) 
                       ))}
                     </tr>
                   ))
-                  : <tr><td colSpan={20}>
+                  : isProposal ? <tr>
+                    <td colSpan={20}>
+                      <div className='flex flex-col gap-3 p-3 items-center text-slate-300'>
+                        No Proposals
+                      </div>
+                    </td>
+                  </tr> : <tr><td colSpan={20}>
                     <div className='flex flex-col gap-3 p-3 items-center text-slate-300'>
                       <p className='text-2xl font-semibold text-transparent drop-shadow-xl bg-clip-text bg-gradient-to-r  from-blue-400 to-purple-300 w-fit'>
                         Wow!
