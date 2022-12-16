@@ -70,16 +70,8 @@ const Form = () => {
     toast.promise(
       createProposalMutation.mutateAsync({ name, description, linkToDocs, linkToRepo, packageName, docVersion, language }),
       {
-        pending: {
-          render() {
-            return <div>Saving</div>
-          },
-        },
-        success: {
-          render() {
-            return <div>Success</div>
-          },
-        },
+        pending: 'Saving',
+        success: 'Success',
         error: {
           render(props: ToastContentProps<TRPCClientError<any>>) {
             let message

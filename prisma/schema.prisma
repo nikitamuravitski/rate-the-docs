@@ -47,10 +47,16 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  role          Role      @default(user)
   accounts      Account[]
   sessions      Session[]
   Rating        Rating[]
   Vote          Vote[]
+}
+
+enum Role {
+  admin
+  user
 }
 
 model VerificationToken {
@@ -75,6 +81,7 @@ model Documentation {
   votes         Vote[]
   language      ForWhatLanguage
   ratingSummary DocumentationWithRating?
+  voteSummary   DocumentationWithVotes?
 }
 
 model DocumentationWithRating {
@@ -91,6 +98,14 @@ model DocumentationWithRating {
   ratings         Rating[]
 }
 
+model DocumentationWithVotes {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  total           Int
+  documentation   Documentation @relation(fields: [documentationId], references: [id])
+  documentationId String        @unique @db.ObjectId
+  votes           Vote[]
+}
+
 model Rating {
   id                      String                   @id @default(auto()) @map("_id") @db.ObjectId
   value                   Int
@@ -102,12 +117,14 @@ model Rating {
 }
 
 model Vote {
-  id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  value           Int
-  user            User          @relation(fields: [userId], references: [id])
-  userId          String        @db.ObjectId
-  documentation   Documentation @relation(fields: [documentationId], references: [id])
-  documentationId String        @db.ObjectId
+  id                       String                  @id @default(auto()) @map("_id") @db.ObjectId
+  value                    Int
+  user                     User                    @relation(fields: [userId], references: [id])
+  userId                   String                  @db.ObjectId
+  documentation            Documentation           @relation(fields: [documentationId], references: [id])
+  documentationId          String                  @db.ObjectId
+  documentationWithVotes   DocumentationWithVotes? @relation(fields: [documentationWithVotesId], references: [id])
+  documentationWithVotesId String?                 @db.ObjectId
 }
 
 enum DocumentationStatus {

@@ -70,7 +70,7 @@ const Ratings = () => {
       id: 'links',
       header: 'Links',
       cell: (info) => {
-        return <div className='flex gap-3'>
+        return <div className='flex gap-3 justify-center'>
           <Link
             className='hover:scale-110 transition-transform'
             href={info.row.original.linkToDocs || '/'}
@@ -122,7 +122,7 @@ const Ratings = () => {
     manualPagination: true,
     onSortingChange: setSorting,
     enableSortingRemoval: false,
-    pageCount: documentation.data?.totalPages ?? 1,
+    pageCount: documentation.data?.totalPages ?? 0,
     manualSorting: true,
     state: {
       sorting,

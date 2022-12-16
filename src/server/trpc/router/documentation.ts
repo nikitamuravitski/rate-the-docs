@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { prisma } from './../../db/client';
 import { protectedProcedure } from '../trpc';
 import { z } from "zod";
@@ -54,10 +55,16 @@ export const documentationRouter = router({
       })
 
       if (dublicate) throw new Error('There is a dublicate')
+
       return prisma.documentation.create({
         data: {
           ...input,
-          docVersion: docVersionHelpers.fold(input.docVersion)
+          docVersion: docVersionHelpers.fold(input.docVersion),
+          voteSummary: {
+            create: {
+              total: 0
+            }
+          }
         }
       })
     }),
@@ -75,47 +82,89 @@ export const documentationRouter = router({
         }
       })
       if (isUserAlreadyVoted) throw new Error('You already voted for this')
-      return prisma.vote.create({
+
+      return prisma.documentationWithVotes.update({
+        where: {
+          documentationId: input.documentationId
+        },
         data: {
-          value: input.value,
-          userId: ctx.session.user.id,
-          documentationId: input.documentationId,
+          total: {
+            increment: input.value,
+          },
+          votes: {
+            create: {
+              documentationId: input.documentationId,
+              userId: ctx.session.user.id,
+              value: input.value,
+            }
+          }
+        },
+        include: {
+          votes: {
+            where: {
+              userId: ctx.session.user.id
+            }
+          }
         }
       })
     }),
 
   getPendingProposals: publicProcedure
     .input(z.object({
+      direction: z.union([z.literal('asc'), z.literal('desc')]),
+      field: z.string(),
       pageIndex: z.number(),
-      pageSize: z.number()
+      pageSize: z.number(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const count = await prisma.documentation.count({
         where: {
           status: 'voting'
         }
       })
       const totalPages = Math.ceil(count / input.pageSize)
+
       const pendingProposals = await prisma.documentation.findMany({
         skip: input.pageIndex * input.pageSize,
         take: input.pageSize,
+        orderBy: input.field === 'voteSummary' ?
+          {
+            voteSummary: {
+              total: input.direction
+            }
+          }
+          : {
+            [input.field]: input.direction
+          },
         where: {
           status: 'voting'
         },
         include: {
-          votes: true
+          voteSummary: true,
+          votes: !!ctx.session?.user?.id ? {
+            where: {
+              userId: {
+                equals: ctx.session.user.id
+              }
+            },
+          } : false
         }
       })
+
       return {
         totalPages, pendingProposals
       }
     }),
 
-  approveProposal: publicProcedure
+  approveProposal: protectedProcedure
     .input(z.object({
       id: z.string(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.session.user.role !== 'admin') throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'You are not allowed to approve proposals'
+      })
       const documentation = await prisma.documentation.update({
         where: {
           id: input.id
@@ -139,11 +188,16 @@ export const documentationRouter = router({
       return documentation
     }),
 
-  declineProposal: publicProcedure
+  declineProposal: protectedProcedure
     .input(z.object({
       id: z.string(),
     }))
-    .mutation(({ input }) => {
+    .mutation(({ input, ctx }) => {
+      if (ctx.session.user.role !== 'admin') throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'You are not allowed to decline proposals'
+      })
+
       return prisma.documentation.update({
         where: {
           id: input.id
