@@ -65,8 +65,7 @@ const Vote = ({ currentUserVote: currentUserVoteInitialData, initialData }: Vote
         <svg
           className={
             cc({
-              '-rotate-90': true,
-              'fill-rose-400 opacity-40 hover:opacity-100 hover:fill-red-500':
+              'fill-orange-900 hover:fill-red-400':
                 !currentUserVote ||
                 (!!currentUserVote && !currentUserVote.length) ||
                 (!!currentUserVote && !!currentUserVote.length && currentUserVote[0]?.value !== -1),
@@ -97,8 +96,7 @@ const Vote = ({ currentUserVote: currentUserVoteInitialData, initialData }: Vote
         <svg
           className={
             cc({
-              'rotate-90': true,
-              'fill-green-600 opacity-40 hover:opacity-100 hover:fill-green-500':
+              'fill-green-900  hover:fill-green-500':
                 !currentUserVote ||
                 (!!currentUserVote && !currentUserVote.length) ||
                 (!!currentUserVote && !!currentUserVote.length && currentUserVote[0]?.value !== 1),
@@ -117,7 +115,8 @@ const Vote = ({ currentUserVote: currentUserVoteInitialData, initialData }: Vote
         >
           <path
             fillRule="nonzero"
-            d="M512 332.66H268.5v92.31c-.68 15.47-5.77 26.46-15.43 32.82-25.79 17.2-52.31-5.26-69.24-22.6L14.33 261.6c-19.11-17.28-19.11-41.93 0-59.21L188.71 24.42c16.06-16.39 40.56-34.09 64.36-18.21 9.66 6.35 14.75 17.34 15.43 32.81v92.31H512v201.33z" />
+            d="M 0 332.66 H 243.5 v 92.31 c 0.68 15.47 5.77 26.46 15.43 32.82 c 25.79 17.2 52.31 -5.26 69.24 -22.6 L 497.67 261.6 c 19.11 -17.28 19.11 -41.93 0 -59.21 L 323.29 24.42 c -16.06 -16.39 -40.56 -34.09 -64.36 -18.21 c -9.66 6.35 -14.75 17.34 -15.43 32.81 v 92.31 H 0 v 201.33 z"
+          />
         </svg>
       </button>
     </div >

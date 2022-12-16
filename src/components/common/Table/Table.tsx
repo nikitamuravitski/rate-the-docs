@@ -10,7 +10,7 @@ const Table = ({ table, isLoading, isProposal = false }: { table: Table<any>, is
         <table className=' text-slate-300 w-full '>
           <thead className='sticky top-0'>
             {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id} className='bg-[#a855f760] backdrop-blur-sm'>
+              <tr key={headerGroup.id} className='bg-[#a855f780] backdrop-blur-sm'>
                 {headerGroup.headers.map(header => (
                   <th key={header.id} className={`${['description', 'name'].includes(header.id) ? 'text-left' : 'text-center'} first:rounded-l-lg last:rounded-r-lg backdrop-brightness-50 text-lg font-medium p-5`}>
                     {header.isPlaceholder
