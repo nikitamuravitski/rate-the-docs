@@ -61,11 +61,6 @@ const Ratings = () => {
       header: () => 'Description',
       enableSorting: false,
     }),
-    columnHelper.accessor('docVersion', {
-      cell: info => <p className='text-gray-400'>{info.getValue()}</p>,
-      header: () => 'Doc version',
-      enableSorting: false,
-    }),
     columnHelper.display({
       id: 'links',
       header: 'Links',
@@ -116,7 +111,7 @@ const Ratings = () => {
   ], [])
 
   const table = useReactTable({
-    data: documentation.data?.documentation!,
+    data: documentation.data?.documentation ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,

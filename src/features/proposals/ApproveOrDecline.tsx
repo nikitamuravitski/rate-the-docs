@@ -21,7 +21,7 @@ const ApproveOrDecline = ({ proposalId, refetchTable }: ApproveOrDeclineType) =>
         {
           pending: 'Saving',
           success: {
-            render(props: ToastContentProps<Prisma.DocumentationGetPayload<{}>>) {
+            render(props: ToastContentProps<Prisma.DocumentationGetPayload<object>>) {
               refetchTable()
               return props.data!.status === 'accepted' ? `${props.data?.name}: Accepted` : `${props.data?.name}: Declined`
             }
