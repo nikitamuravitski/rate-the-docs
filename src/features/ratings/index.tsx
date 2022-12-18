@@ -15,6 +15,7 @@ import SearchBar from '../../components/common/SearchBar'
 import { useDebounce } from '../../hooks/useDebounce'
 import Link from 'next/link'
 import type { Prisma } from '@prisma/client'
+import SidePanel from './SidePanel'
 
 const columnHelper = createColumnHelper<Prisma.DocumentationGetPayload<{
   include: {
@@ -34,6 +35,15 @@ const Ratings = () => {
   const [languageFilter, setLanguageFilter] = useState<Language | undefined>()
   const [searchFilter, setSearchFilter] = useState<string>('')
   const debouncedSearchFilter = useDebounce(searchFilter, 300)
+
+  const [isSidePanelOpen, setISSidePanelOpen] = useState<boolean>(false)
+  const [currentSelectedRow, setCurrentSelectedRow] = useState<string | null>(null)
+
+  const rowCkickHandler = (row: any) => {
+    setISSidePanelOpen(true)
+    if (row.id === currentSelectedRow && isSidePanelOpen) setISSidePanelOpen(false)
+    setCurrentSelectedRow(row.id)
+  }
 
   const documentation = trpc.documentation.getDocumentation.useQuery(
     {
@@ -128,15 +138,22 @@ const Ratings = () => {
     }
   })
 
-  return (<div className='flex flex-col w-full p-3 gap-3 items-center self-start '>
+
+
+  return (<div className='flex flex-col w-full p-3 gap-3 items-center self-start max-w-7xl'>
     <SearchBar
       onSearch={(value) => setSearchFilter(value)}
       search={searchFilter}
       onChooseLanguage={(lang) => setLanguageFilter(lang)}
       currentLanguage={languageFilter}
     />
-    <Table isLoading={documentation.isLoading} table={table} />
-    <Pagination table={table} pageIndex={pageIndex} pageSize={pageSize} setPagination={setPagination} />
+    <div className='flex flex-1 w-full'>
+      <div className='flex flex-col items-center w-full'>
+        <Table onRowClickHandler={rowCkickHandler} isLoading={documentation.isLoading} table={table} />
+        <Pagination table={table} pageIndex={pageIndex} pageSize={pageSize} setPagination={setPagination} />
+      </div>
+      <SidePanel isOpen={isSidePanelOpen} id={currentSelectedRow} />
+    </div>
   </div>
   )
 }
