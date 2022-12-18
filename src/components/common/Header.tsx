@@ -20,6 +20,11 @@ const Header = () => {
       <nav>
         <ul className='flex text-slate-200 gap-10 h-full items-center'>
           <li>
+            <Link href="/">
+              Home
+            </Link>
+          </li>
+          <li>
             <Link href="/ratings">
               Ratings
             </Link>

@@ -5,14 +5,14 @@ import Link from 'next/link'
 
 const Table = ({ table, isLoading, isProposal = false }: { table: Table<any>, isLoading: boolean, isProposal?: boolean }) => {
   return (
-    <div className='rounded-xl overflow-hidden  w-full max-w-7xl m-3 bg-[#00fffc0a]'>
+    <div className='rounded-xl overflow-hidden shadow-2xl w-full max-w-7xl m-3 backdrop-blur-lg bg-[#063b2815]'>
       <div className='max-h-[70vh] overflow-auto p-3'>
-        <table className=' text-slate-300 w-full '>
+        <table className=' text-slate-300 w-full'>
           <thead className='sticky top-0'>
             {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id} className='bg-[#a855f780] backdrop-blur-sm'>
+              <tr key={headerGroup.id} className='bg-gradient-to-r from-[#9333ea50] to-[#0284c780]'>
                 {headerGroup.headers.map(header => (
-                  <th key={header.id} className={`${['description', 'name'].includes(header.id) ? 'text-left' : 'text-center'} first:rounded-l-lg last:rounded-r-lg backdrop-brightness-50 text-lg font-medium p-5`}>
+                  <th key={header.id} className={`${['description', 'name'].includes(header.id) ? 'text-left' : 'text-center'} first:rounded-l-lg last:rounded-r-lg text-md text-slate-200 font-medium p-5`}>
                     {header.isPlaceholder
                       ? null
                       : <div
@@ -50,7 +50,7 @@ const Table = ({ table, isLoading, isProposal = false }: { table: Table<any>, is
               <>
                 {table.getRowModel().rows.length ?
                   table.getRowModel().rows.map(row => (
-                    <tr key={row.id} className='border-t-[1px] first:border-0 border-t-slate-600 hover:backdrop-brightness-125'>
+                    <tr key={row.id} className='border-t-[1px] first:border-0 border-t-slate-600 hover:bg-[#ffffff09]'>
                       {row.getVisibleCells().map(cell => (
                         <td key={cell.id} className={`${['description', 'name'].includes(cell.column.id) ? '' : 'text-center'} p-5`}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}

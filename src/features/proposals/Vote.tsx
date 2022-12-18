@@ -7,8 +7,8 @@ import { trpc } from '../../utils/trpc'
 import cc from 'classcat'
 
 type VoteComponent = ({
-  currentUserVote: Prisma.VoteGetPayload<{}>[],
-  initialData: Prisma.DocumentationWithVotesGetPayload<{}> | null,
+  currentUserVote: Prisma.VoteGetPayload<object>[],
+  initialData: Prisma.DocumentationWithVotesGetPayload<object> | null,
   refetchTable(): void
 })
 

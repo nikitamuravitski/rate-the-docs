@@ -7,8 +7,8 @@ import { Prisma } from '@prisma/client'
 
 
 type RateComponent = {
-  data: Prisma.DocumentationWithRatingGetPayload<{}> | null,
-  currentUserRating: Prisma.RatingGetPayload<{}>[],
+  data: Prisma.DocumentationWithRatingGetPayload<object> | null,
+  currentUserRating: Prisma.RatingGetPayload<object>[],
 }
 
 const Rating = ({
