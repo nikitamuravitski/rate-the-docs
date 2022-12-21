@@ -138,7 +138,7 @@ const Ratings = () => {
     }),
     columnHelper.accessor('ratingSummary', {
       header: () => 'Rating',
-      cell: info => <button onClick={(e) => rowClickHandler(info.row.original)}>{info.getValue()?.avg.toFixed(2)}</button>
+      cell: info => <button className='whitespace-nowrap' onClick={(e) => rowClickHandler(info.row.original)}>{info.getValue()?.avg.toFixed(2)} ({info.getValue()?.total})</button>
     })
   ], [currentSelectedDocumentation])
 
