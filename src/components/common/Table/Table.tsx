@@ -1,10 +1,19 @@
 import React from 'react'
-import { flexRender, Table } from '@tanstack/react-table'
+import { CoreRow, flexRender, Row, Table } from '@tanstack/react-table'
 import Loader from '../Loader'
 import Link from 'next/link'
 import cc from 'classcat'
 
-const Table = ({ table, isLoading, isProposal = false, onRowClickHandler }: { table: Table<any>, isLoading: boolean, isProposal?: boolean, onRowClickHandler(row: any): void }) => {
+const Table = (
+  { table, isLoading, isProposal = false, onRowClickHandler }
+    :
+    {
+      table: Table<any>,
+      isLoading: boolean,
+      isProposal?: boolean,
+      onRowClickHandler?(row: any): void
+    }
+) => {
   return (
     <div className='rounded-xl overflow-hidden shadow-2xl w-full max-w-7xl m-3 backdrop-blur-lg bg-[#063b2815]'>
       <div className='max-h-[70vh] overflow-auto p-3'>
@@ -50,9 +59,15 @@ const Table = ({ table, isLoading, isProposal = false, onRowClickHandler }: { ta
                 {table.getRowModel().rows.length ?
                   table.getRowModel().rows.map(row => (
                     <tr
-                      onClick={(e) => onRowClickHandler(row.original)}
+                      onClick={(e) => onRowClickHandler && onRowClickHandler(row.original)}
                       key={row.id}
-                      className='border-t-[1px] first:border-0 border-t-slate-600 hover:bg-[#ffffff09]'
+                      className={
+                        cc({
+                          'border-t-[1px] first:border-0 border-t-slate-600 hover:bg-[#ffffff09]': true,
+                          'cursor-pointer': !!onRowClickHandler
+                        })
+
+                      }
                     >
                       {row.getVisibleCells().map(cell => (
                         <td key={cell.id} className={`${['description', 'name'].includes(cell.column.id) ? '' : 'text-center'} p-5`}>

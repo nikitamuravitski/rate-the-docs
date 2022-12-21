@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import InputWithSelect from '../../components/common/InputWithSelect';
 import { useDebounce } from '../../hooks/useDebounce';
-import { DocVersion, Language } from "../../types/Documentation"
+import { VersionRange, Language } from "../../types/Documentation"
 import { trpc } from "../../utils/trpc";
 import ChooseLanguage from '../../components/common/ChooseLanguage';
 import Input from './Input';
@@ -16,7 +16,7 @@ enum fields {
   linkToDocs = 'linkToDocs',
   linkToRepo = 'linkToRepo',
   packageName = 'packageName',
-  docVersion = 'docVersion',
+  versionRange = 'versionRange',
   language = 'language'
 }
 
@@ -26,7 +26,7 @@ const messageInitialState = {
   [fields.linkToDocs]: '',
   [fields.linkToRepo]: '',
   [fields.packageName]: '',
-  [fields.docVersion]: ''
+  [fields.versionRange]: ''
 }
 
 const Form = () => {
@@ -35,7 +35,7 @@ const Form = () => {
   const [linkToDocs, setLinkToDocs] = useState<string>('')
   const [linkToRepo, setLinkToRepo] = useState<string>('')
   const [packageName, setPackageName] = useState<string>('')
-  const [docVersion, setDocVersion] = useState<DocVersion>([null, null, null])
+  const [versionRange, setVersionRange] = useState<VersionRange>([0, 0])
   const [language, setLanguage] = useState<Language>(Language.javascript)
 
   const setters = {
@@ -44,7 +44,7 @@ const Form = () => {
     [fields.linkToDocs]: setLinkToDocs,
     [fields.linkToRepo]: setLinkToRepo,
     [fields.packageName]: setPackageName,
-    [fields.docVersion]: setDocVersion
+    [fields.versionRange]: setVersionRange
   }
 
   const [message, setMessage] = useState({ ...messageInitialState })
@@ -68,7 +68,7 @@ const Form = () => {
 
   const createProposalHandler = async () => {
     toast.promise(
-      createProposalMutation.mutateAsync({ name, description, linkToDocs, linkToRepo, packageName, docVersion, language }),
+      createProposalMutation.mutateAsync({ name, description, linkToDocs, linkToRepo, packageName, versionRange, language }),
       {
         pending: 'Saving',
         success: 'Success',
@@ -101,7 +101,7 @@ const Form = () => {
     const pack = packageData!.find((pack: any) => pack.name === packageName)
     setState(fields.description, (old: string) => pack.description || old)
     setState(fields.linkToRepo, (old: string) => pack.links.repository || old)
-    setState(fields.docVersion, (old: DocVersion) => docVersionHelpers.unfold(pack.version) || old)
+    setState(fields.versionRange, (old: VersionRange) => [old[0], docVersionHelpers.unfold(pack.version)[0]] || old)
   }
 
   return (
@@ -156,10 +156,10 @@ const Form = () => {
           label='Link to Repo'
         />
         <VersionInput
-          errorMessage={message[fields.docVersion]}
-          value={docVersion}
-          onChangeHandler={(value) => setState(fields.docVersion, value)}
-          label='Doc version'
+          errorMessage={message[fields.versionRange]}
+          value={versionRange}
+          onChangeHandler={(value) => setState(fields.versionRange, value)}
+          label='Version range'
         />
         <button
           type='button'
