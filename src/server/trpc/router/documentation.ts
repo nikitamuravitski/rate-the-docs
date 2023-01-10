@@ -4,8 +4,9 @@ import { protectedProcedure } from '../trpc';
 import { z } from "zod";
 
 import { router, publicProcedure } from "../trpc";
-import { docVersion, language } from '../../../types/zodTypes';
-import docVersionHelpers from '../../../utils/docVersionHelpers';
+import { language, versionRange } from '../../../types/zodTypes';
+// import docVersionHelpers from '../../../utils/docVersionHelpers';
+import { Documentation } from '@prisma/client';
 
 
 export const documentationRouter = router({
@@ -31,16 +32,13 @@ export const documentationRouter = router({
         .string()
         .min(2, "Package name is too short (minimum 2)")
         .trim(),
-      docVersion,
+      versionRange,
       language
     }))
     .mutation(async ({ input }) => {
       const dublicate = await prisma.documentation.findFirst({
         where: {
           AND: [
-            {
-              docVersion: docVersionHelpers.fold(input.docVersion)
-            },
             {
               packageName: input.packageName
             },
@@ -59,13 +57,13 @@ export const documentationRouter = router({
       return prisma.documentation.create({
         data: {
           ...input,
-          docVersion: docVersionHelpers.fold(input.docVersion),
+          versionRange: [input.versionRange[0]!, input.versionRange[1]!],
           voteSummary: {
             create: {
               total: 0
             }
           }
-        }
+        },
       })
     }),
 
@@ -83,7 +81,7 @@ export const documentationRouter = router({
       })
       if (isUserAlreadyVoted) throw new Error('You already voted for this')
 
-      return prisma.documentationWithVotes.update({
+      return prisma.votesSummary.update({
         where: {
           documentationId: input.documentationId
         },
@@ -165,7 +163,8 @@ export const documentationRouter = router({
         code: 'UNAUTHORIZED',
         message: 'You are not allowed to approve proposals'
       })
-      const documentation = await prisma.documentation.update({
+
+      const documentation: Documentation = await prisma.documentation.update({
         where: {
           id: input.id
         },
@@ -173,7 +172,13 @@ export const documentationRouter = router({
           status: 'accepted'
         }
       })
-      const rating = await prisma.documentationWithRating.create({
+
+      const versionList = []
+      for (let i = documentation.versionRange[0]!; i <= documentation.versionRange[1]!; i++) {
+        versionList.push(i)
+      }
+
+      await prisma.ratingSummary.create({
         data: {
           documentationId: input.id,
           avg: 0,
@@ -184,6 +189,20 @@ export const documentationRouter = router({
           five: 0,
           total: 0,
         }
+      })
+      await prisma.ratingSummaryByVersion.createMany({
+        data: versionList.map(version => ({
+          documentationId: input.id,
+          avg: 0,
+          one: 0,
+          two: 0,
+          three: 0,
+          four: 0,
+          five: 0,
+          total: 0,
+          majorVersion: version
+        })),
+
       })
       return documentation
     }),
@@ -285,28 +304,48 @@ export const documentationRouter = router({
   rateDocumentation: protectedProcedure
     .input(z.object({
       value: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
-      documentationId: z.string()
+      documentationId: z.string(),
+      ratingSummaryByVersionId: z.string(),
+      documentationVersion: z.number(),
     }))
     .mutation(async ({ ctx, input }) => {
       const isUserAlreadyRated = await prisma.rating.findFirst({
         where: {
           userId: ctx.session.user.id,
-          documentationId: input.documentationId
+          documentationId: input.documentationId,
+          documentationVersion: {
+            equals: input.documentationVersion
+          }
         }
       })
 
       if (isUserAlreadyRated) throw new Error('You already rated this')
 
-      const documentationWithRating = await prisma.documentationWithRating.findFirst({
+      const documentationWithRating = await prisma.ratingSummary.findFirst({
         where: {
           documentationId: input.documentationId
         }
       })
 
-      let newAvg
+      const documentationWithRatingByVersion = await prisma.ratingSummaryByVersion.findUniqueOrThrow({
+        where: {
+          id: input.ratingSummaryByVersionId,
+        }
+      })
+
+      let newAvgForDocumentationWithRating
+      let newAvgForDocumentationWithRationByVersion
 
       if (documentationWithRating?.avg && documentationWithRating?.total) {
-        newAvg = (documentationWithRating.avg * documentationWithRating.total + input.value) / (documentationWithRating?.total + 1)
+        newAvgForDocumentationWithRating = (
+          documentationWithRating.avg * documentationWithRating.total + input.value
+        ) / (documentationWithRating?.total + 1)
+      }
+
+      if (documentationWithRatingByVersion?.avg && documentationWithRatingByVersion?.total) {
+        newAvgForDocumentationWithRationByVersion = (
+          documentationWithRatingByVersion.avg * documentationWithRatingByVersion.total + input.value
+        ) / (documentationWithRatingByVersion?.total + 1)
       }
 
       const variants = {
@@ -319,13 +358,15 @@ export const documentationRouter = router({
 
       const newRating = await prisma.rating.create({
         data: {
+          documentationVersion: input.documentationVersion,
           value: input.value,
           documentationId: input.documentationId,
+          ratingSummaryByVersionId: input.ratingSummaryByVersionId,
           userId: ctx.session.user.id,
         }
       })
 
-      const updatedRatingSummary = await prisma.documentationWithRating.update({
+      const updatedRatingSummary = await prisma.ratingSummary.update({
         where: {
           documentationId: input.documentationId
         },
@@ -337,11 +378,55 @@ export const documentationRouter = router({
             increment: 1
           },
           avg: {
-            set: newAvg || input.value
+            set: newAvgForDocumentationWithRating || input.value
+          },
+        },
+      })
+
+
+      await prisma.ratingSummaryByVersion.update({
+        where: {
+          id: input.ratingSummaryByVersionId
+        },
+        data: {
+          [variants[input.value]]: {
+            increment: 1
+          },
+          total: {
+            increment: 1
+          },
+          avg: {
+            set: newAvgForDocumentationWithRationByVersion || input.value
           }
         }
       })
 
       return { updatedRatingSummary, newRating: [newRating] }
     }),
-});
+
+  getDocumentationRatings: publicProcedure
+    .input(z.object({
+      id: z.string().nullish()
+    }))
+    .query(({ input, ctx }) => {
+      if (!input.id) return
+
+      return prisma.ratingSummaryByVersion.findMany({
+        where: {
+          documentationId: input.id,
+        },
+        orderBy: {
+          majorVersion: 'desc'
+        },
+        include: {
+          ratings: !!ctx.session?.user?.id ? {
+            where: {
+              userId: {
+                equals: ctx.session.user.id
+              }
+            }
+          } : false,
+        }
+      })
+    })
+})

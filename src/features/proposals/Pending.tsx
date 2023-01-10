@@ -105,13 +105,13 @@ const PendingProposals = () => {
       }
     }),
     columnHelper.accessor('packageName', {
-      header: () => 'NPM name',
+      header: () => 'Package name',
       cell: info => info.getValue(),
       enableSorting: true,
     }),
-    columnHelper.accessor('docVersion', {
-      header: () => 'Docs Version',
-      cell: info => info.getValue(),
+    columnHelper.accessor('versionRange', {
+      header: () => 'Versions',
+      cell: info => <>{info.getValue()[0]} - {info.getValue()[1]}</>,
       enableSorting: true,
     }),
     columnHelper.accessor('voteSummary', {
@@ -153,7 +153,7 @@ const PendingProposals = () => {
     }
   })
 
-  return (<div className='flex flex-col self-start gap-3 p-3 items-center w-full'>
+  return <div className='flex flex-col self-start gap-3 p-3 items-center w-full'>
     <Table isProposal table={table} isLoading={isProposalsLoading} />
     <Pagination
       pageIndex={pageIndex}
@@ -162,7 +162,6 @@ const PendingProposals = () => {
       table={table}
     />
   </div>
-  )
 }
 
 export default PendingProposals

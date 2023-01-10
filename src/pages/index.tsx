@@ -22,7 +22,7 @@ const Home: NextPage = () => {
               <span className="text-[yellowgreen]">feedback</span>
               <span className="text-rose-500 font-normal">|</span>
               <span className="text-[mediumpurple]">rating</span>{' '}
-              <p className="text-4xl font-normal">system for package documentation</p>
+              <p className="text-4xl font-normal">for package documentation</p>
             </h1>
             <Link href={'./ratings'} className='transition-colors bg-purple-600 hover:bg-purple-500 py-3 px-8 h-fit rounded-lg text-2xl shadow-xl text-white'>Participate</Link>
           </section>

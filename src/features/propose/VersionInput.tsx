@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react'
-import { DocVersion } from '../../types/Documentation'
+import { VersionRange } from '../../types/Documentation'
 import inputStyles from '../../styles/input.module.css'
 
 const VersionInput = ({
@@ -10,8 +10,8 @@ const VersionInput = ({
 }: {
   errorMessage: string
   label: string
-  value: DocVersion
-  onChangeHandler(value: DocVersion): void
+  value: VersionRange
+  onChangeHandler(value: VersionRange): void
 }) => {
   const id = label.split(' ').join('').toLowerCase()
   return (

@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { docVersion } from './zodTypes'
+import { versionRange } from './zodTypes'
 
-export type DocVersion = z.infer<typeof docVersion>
+export type VersionRange = z.infer<typeof versionRange>
 
 export type Vote = {
   id: string

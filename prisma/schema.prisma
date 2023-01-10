@@ -69,22 +69,23 @@ model VerificationToken {
 }
 
 model Documentation {
-  id            String                   @id @default(auto()) @map("_id") @db.ObjectId
-  name          String
-  description   String
-  linkToDocs    String
-  linkToRepo    String
-  packageName   String
-  docVersion    String
-  status        DocumentationStatus      @default(voting)
-  ratings       Rating[]
-  votes         Vote[]
-  language      ForWhatLanguage
-  ratingSummary DocumentationWithRating?
-  voteSummary   DocumentationWithVotes?
+  id              String                   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String
+  linkToDocs      String
+  linkToRepo      String
+  packageName     String
+  versionRange    Int[]
+  status          DocumentationStatus      @default(voting)
+  ratings         Rating[]
+  votes           Vote[]
+  language        ForWhatLanguage
+  ratingSummary   RatingSummary?
+  voteSummary     VotesSummary?
+  ratingByVersion RatingSummaryByVersion[]
 }
 
-model DocumentationWithRating {
+model RatingSummary {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
   avg             Float
   total           Int
@@ -98,7 +99,22 @@ model DocumentationWithRating {
   ratings         Rating[]
 }
 
-model DocumentationWithVotes {
+model RatingSummaryByVersion {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  majorVersion    Int
+  avg             Float
+  total           Int
+  one             Int
+  two             Int
+  three           Int
+  four            Int
+  five            Int
+  documentation   Documentation @relation(fields: [documentationId], references: [id])
+  documentationId String        @db.ObjectId
+  ratings         Rating[]
+}
+
+model VotesSummary {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
   total           Int
   documentation   Documentation @relation(fields: [documentationId], references: [id])
@@ -107,24 +123,27 @@ model DocumentationWithVotes {
 }
 
 model Rating {
-  id                      String                   @id @default(auto()) @map("_id") @db.ObjectId
-  value                   Int
-  user                    User                     @relation(fields: [userId], references: [id])
-  userId                  String                   @db.ObjectId
-  DocumentationWithRating DocumentationWithRating? @relation(fields: [documentationId], references: [documentationId])
-  Documentation           Documentation?           @relation(fields: [documentationId], references: [id])
-  documentationId         String?                  @db.ObjectId
-}
-
-model Vote {
   id                       String                  @id @default(auto()) @map("_id") @db.ObjectId
+  documentationVersion     Int
   value                    Int
   user                     User                    @relation(fields: [userId], references: [id])
   userId                   String                  @db.ObjectId
-  documentation            Documentation           @relation(fields: [documentationId], references: [id])
-  documentationId          String                  @db.ObjectId
-  documentationWithVotes   DocumentationWithVotes? @relation(fields: [documentationWithVotesId], references: [id])
-  documentationWithVotesId String?                 @db.ObjectId
+  ratingSummary            RatingSummary?          @relation(fields: [documentationId], references: [documentationId])
+  documentation            Documentation?          @relation(fields: [documentationId], references: [id])
+  ratingSummaryByVersion   RatingSummaryByVersion? @relation(fields: [ratingSummaryByVersionId], references: [id])
+  ratingSummaryByVersionId String?                 @db.ObjectId
+  documentationId          String?                 @db.ObjectId
+}
+
+model Vote {
+  id                       String        @id @default(auto()) @map("_id") @db.ObjectId
+  value                    Int
+  user                     User          @relation(fields: [userId], references: [id])
+  userId                   String        @db.ObjectId
+  documentation            Documentation @relation(fields: [documentationId], references: [id])
+  documentationId          String        @db.ObjectId
+  votesSummary             VotesSummary? @relation(fields: [documentationWithVotesId], references: [id])
+  documentationWithVotesId String?       @db.ObjectId
 }
 
 enum DocumentationStatus {

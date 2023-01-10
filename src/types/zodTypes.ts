@@ -8,15 +8,6 @@ export const language = z.union([
   z.literal(Language.python),
 ])
 
-export const docVersion = z.tuple([
-  z.union([z.number().gte(0), z.null()]),
-  z.union([z.number().gte(0), z.null()]),
-  z.union([z.number().gte(0), z.null()]),
-])
-  .refine((doc) => {
-    let isDocVersionValid = true
-    doc.forEach((cur, i) => {
-      if (i < doc.length - 1 && cur === null && doc[i + 1] !== null) isDocVersionValid = false
-    })
-    return isDocVersionValid
-  }, 'Version must have proper order')
+export const versionRange = z
+  .tuple([z.number().nullable(), z.number().positive().nullable()])
+  .refine((doc) => !doc.some(version => version === null) && doc[1]! > doc[0]!, 'Version must be valid')

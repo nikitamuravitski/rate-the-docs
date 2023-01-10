@@ -7,7 +7,6 @@ import {
 } from '@tanstack/react-table'
 import { Language } from '../../types/Documentation'
 import { trpc } from '../../utils/trpc'
-import Rating from './Rating'
 import LanguageIcon from '../../components/common/LanguageIcon'
 import Table from '../../components/common/Table/Table'
 import Pagination from '../../components/common/Table/Pagination'
@@ -15,6 +14,7 @@ import SearchBar from '../../components/common/SearchBar'
 import { useDebounce } from '../../hooks/useDebounce'
 import Link from 'next/link'
 import type { Prisma } from '@prisma/client'
+import SidePanel from './SidePanel'
 
 const columnHelper = createColumnHelper<Prisma.DocumentationGetPayload<{
   include: {
@@ -35,7 +35,30 @@ const Ratings = () => {
   const [searchFilter, setSearchFilter] = useState<string>('')
   const debouncedSearchFilter = useDebounce(searchFilter, 300)
 
-  const documentation = trpc.documentation.getDocumentation.useQuery(
+  const [currentSelectedDocumentation, setCurrentSelectedDocumentation] =
+    useState<Prisma.DocumentationGetPayload<{
+      include: {
+        ratingSummary: true,
+        ratings: true
+      }
+    }> | null>
+      (null)
+
+  const rowClickHandler = (row: Prisma.DocumentationGetPayload<{
+    include: {
+      ratingSummary: true,
+      ratings: true
+    }
+  }>) => {
+    if (row.id === currentSelectedDocumentation?.id) return setCurrentSelectedDocumentation(null)
+    setCurrentSelectedDocumentation(row)
+  }
+
+  const {
+    data: documentationData,
+    refetch: refetchDocumentation,
+    isLoading: isDocumentationLoading
+  } = trpc.documentation.getDocumentation.useQuery(
     {
       searchFilter: debouncedSearchFilter,
       direction: sorting[0]!.desc ? 'desc' : 'asc',
@@ -43,7 +66,14 @@ const Ratings = () => {
       pageIndex,
       pageSize,
       language: languageFilter
-    })
+    }, {
+    onSuccess: (data) => {
+      if (currentSelectedDocumentation) {
+        const newDataForCurrentSelectedDocumentation = data.documentation.find(doc => doc.id === currentSelectedDocumentation.id)
+        if (newDataForCurrentSelectedDocumentation) setCurrentSelectedDocumentation(newDataForCurrentSelectedDocumentation)
+      }
+    }
+  })
 
   const columns = useMemo(() => [
     columnHelper.accessor('language', {
@@ -68,6 +98,7 @@ const Ratings = () => {
         return <div className='flex gap-3 justify-center'>
           <Link
             className='hover:scale-110 transition-transform'
+            onClick={e => e.stopPropagation()}
             href={info.row.original.linkToDocs || '/'}
             target={'_blank'}
           >
@@ -82,6 +113,7 @@ const Ratings = () => {
               className='hover:scale-110 transition-transform'
               href={info.row.original.linkToRepo || '/'}
               target={'_blank'}
+              onClick={e => e.stopPropagation()}
             >
               <svg xmlns="http://www.w3.org/2000/svg"
                 width="25px"
@@ -106,18 +138,18 @@ const Ratings = () => {
     }),
     columnHelper.accessor('ratingSummary', {
       header: () => 'Rating',
-      cell: info => <Rating key={info.row.original.id} data={info.getValue()} currentUserRating={info.row.original.ratings} />,
+      cell: info => <button className='whitespace-nowrap' onClick={(e) => rowClickHandler(info.row.original)}>{info.getValue()?.avg.toFixed(2)} ({info.getValue()?.total})</button>
     })
-  ], [])
+  ], [currentSelectedDocumentation])
 
   const table = useReactTable({
-    data: documentation.data?.documentation ?? [],
+    data: documentationData?.documentation ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     onSortingChange: setSorting,
     enableSortingRemoval: false,
-    pageCount: documentation.data?.totalPages ?? 0,
+    pageCount: documentationData?.totalPages ?? 0,
     manualSorting: true,
     state: {
       sorting,
@@ -128,15 +160,20 @@ const Ratings = () => {
     }
   })
 
-  return (<div className='flex flex-col w-full p-3 gap-3 items-center self-start '>
+  return (<div className='flex flex-col w-full p-3 gap-3 items-center self-start max-w-7xl'>
     <SearchBar
       onSearch={(value) => setSearchFilter(value)}
       search={searchFilter}
       onChooseLanguage={(lang) => setLanguageFilter(lang)}
       currentLanguage={languageFilter}
     />
-    <Table isLoading={documentation.isLoading} table={table} />
-    <Pagination table={table} pageIndex={pageIndex} pageSize={pageSize} setPagination={setPagination} />
+    <div className='flex flex-1 w-full'>
+      <div className='flex flex-col items-center w-full'>
+        <Table onRowClickHandler={(row) => rowClickHandler(row)} isLoading={isDocumentationLoading} table={table} />
+        <Pagination table={table} pageIndex={pageIndex} pageSize={pageSize} setPagination={setPagination} />
+      </div>
+      <SidePanel data={currentSelectedDocumentation} refetchDocumentation={refetchDocumentation} />
+    </div>
   </div>
   )
 }
