@@ -18,6 +18,7 @@ const SidePanel = ({
 
   const [isFirstDataFetch, setIsFirtsDataFetch] = useState(true)
   const [selectedVersion, setSelectedVersion] = useState<null | number>(null)
+  const [isDetailedRatingOpen, setIsDetailedRatingOpen] = useState<boolean>(false)
 
   const { data: queryData, refetch: refetchRatings, isFetching } = trpc.documentation.getDocumentationRatings.useQuery(
     { id: data?.id },
@@ -42,23 +43,23 @@ const SidePanel = ({
     const choosenData = selectedVersion ? queryData?.find(doc => doc.majorVersion === selectedVersion) : data?.ratingSummary
     return [
       {
-        name: 'One',
+        name: '1',
         value: choosenData?.one
       },
       {
-        name: 'Two',
+        name: '2',
         value: choosenData?.two
       },
       {
-        name: 'Three',
+        name: '3',
         value: choosenData?.three
       },
       {
-        name: 'Four',
+        name: '4',
         value: choosenData?.four
       },
       {
-        name: 'Five',
+        name: '5',
         value: choosenData?.five
       }
     ]
@@ -67,7 +68,7 @@ const SidePanel = ({
   return (
     <div
       className={cc({
-        'rounded-xl overflow-hidden shadow-2xl w-full backdrop-blur-lg bg-[#063b2815] transition-all duration-500 text-white': true,
+        'h-fit rounded-xl overflow-hidden shadow-2xl w-full backdrop-blur-lg bg-[#063b2815] transition-all duration-500 text-white': true,
         'max-w-0 opacity-0 p-0 m-0': !data,
         'max-w-[400px] opacity-100 p-5 m-3': !!data
       })}
@@ -78,7 +79,7 @@ const SidePanel = ({
             <LanguageIcon language={data.language} />
             <h2 className='text-lg text-purple-100'>{data.name}</h2>
           </div>
-          <ul className={styles['versionList']}>
+          <ul className={styles.versionList}>
             <li
               className={
                 cc({
@@ -116,28 +117,36 @@ const SidePanel = ({
               </div> :
               <div>
                 Your average:{' '}
-                {(data.ratings && data.ratings.length && data.ratings.reduce((acc, cur) => acc += cur.value, 0) / data.ratings.length).toFixed(2)}
+                {data && data.ratings && data.ratings.length && (data.ratings.reduce((acc, cur) => acc += cur.value, 0) / data.ratings.length).toFixed(2)}
               </div>
           }
-          <div className='flex'>
-            Average: {isFetching ? <Loader /> : selectedVersion !== null ? queryData?.find(item => item.majorVersion === selectedVersion)!.avg.toFixed(2) : data.ratingSummary?.avg.toFixed(2)}{' '}
+          <div className='flex justify-between items-center'>
+            <span className='flex'>
+              Average: {isFetching ? <Loader /> : selectedVersion !== null ? queryData?.find(item => item.majorVersion === selectedVersion)!.avg.toFixed(2) : data.ratingSummary?.avg.toFixed(2)}{' '}
+            </span>
+            <button className='bg-sky-700 hover:bg-sky-500 rounded-full px-2 py-1' onClick={() => setIsDetailedRatingOpen(!isDetailedRatingOpen)}>
+              {isDetailedRatingOpen ? ' Hide details' : ' Show details'}
+            </button>
           </div>
-          <ResponsiveContainer width='100%' height={200} >
-            <BarChart data={chartData} margin={{ left: 0 }} layout="vertical">
-              <Tooltip
-                labelFormatter={(label, payload) => ''}
-                separator=''
-                formatter={(value) => [value, '']}
-                itemStyle={{ color: 'white' }}
-                cursor={{ fill: '#ffffff10' }}
-                contentStyle={{ background: 'transparent', border: 'none', }}
-                wrapperStyle={{ backgroundColor: '#ffffff30', backdropFilter: 'blur(15px)', outline: 'none', borderRadius: 20, boxShadow: '0 5px 40px 5px #00000010' }}
-              />
-              <XAxis hide={true} tickLine={false} type='number' />
-              <YAxis tickLine={false} dataKey="name" type='category' />
-              <Bar dataKey="value" fill="rgb(1,105,161)" format={''} />
-            </BarChart>
-          </ResponsiveContainer>
+          {isDetailedRatingOpen ?
+            <ResponsiveContainer width='100%' height={200} >
+              <BarChart data={chartData} margin={{ left: 0 }} layout="vertical">
+                <Tooltip
+                  labelFormatter={() => ''}
+                  separator=''
+                  formatter={(value) => [value, '']}
+                  itemStyle={{ color: 'white' }}
+                  cursor={{ fill: '#ffffff10' }}
+                  contentStyle={{ background: 'transparent', border: 'none', }}
+                  wrapperStyle={{ backgroundColor: '#ffffff30', backdropFilter: 'blur(15px)', outline: 'none', borderRadius: 20, boxShadow: '0 5px 40px 5px #00000010' }}
+                />
+                <XAxis hide={true} tickLine={false} type='number' padding={{ left: 5 }} />
+                <YAxis tickLine={false} dataKey="name" type='category' axisLine={false} width={20} />
+                <Bar dataKey="value" fill="rgb(1,105,161)" format={''} />
+              </BarChart>
+            </ResponsiveContainer>
+            : null
+          }
           {/* <div>
             Comments:
             Show comment section here

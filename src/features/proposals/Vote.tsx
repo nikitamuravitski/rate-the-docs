@@ -8,7 +8,7 @@ import cc from 'classcat'
 
 type VoteComponent = ({
   currentUserVote: Prisma.VoteGetPayload<object>[],
-  initialData: Prisma.DocumentationWithVotesGetPayload<object> | null,
+  initialData: Prisma.VotesSummaryGetPayload<object> | null,
   refetchTable(): void
 })
 
@@ -28,7 +28,7 @@ const Vote = ({ currentUserVote: currentUserVoteInitialData, initialData }: Vote
         {
           pending: 'Saving',
           success: {
-            render(props: ToastContentProps<Prisma.DocumentationWithVotesGetPayload<{ include: { votes: true } }>>) {
+            render(props: ToastContentProps<Prisma.VotesSummaryGetPayload<{ include: { votes: true } }>>) {
               setTotal(props.data!.total)
               setCurrentUserVote(props.data!.votes)
               return props.data!.votes[0]!.value === 1 ? 'Upvoted' : 'Downvoted'

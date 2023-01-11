@@ -33,7 +33,7 @@ const Ratings = () => {
   ])
   const [languageFilter, setLanguageFilter] = useState<Language | undefined>()
   const [searchFilter, setSearchFilter] = useState<string>('')
-  const debouncedSearchFilter = useDebounce(searchFilter, 300)
+  const debouncedSearchFilter = useDebounce(searchFilter, 300);
 
   const [currentSelectedDocumentation, setCurrentSelectedDocumentation] =
     useState<Prisma.DocumentationGetPayload<{
