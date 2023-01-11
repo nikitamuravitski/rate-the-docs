@@ -13,15 +13,13 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/ratings',
-        permanent: false,
-        locale: false
-      },
-    ]
-  },
+  webpack(config) {
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ["@svgr/webpack"]
+    });
+
+    return config;
+  }
 };
 export default config;

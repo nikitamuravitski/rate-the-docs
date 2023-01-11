@@ -14,25 +14,30 @@ const Header = () => {
         <span
           className="w-fit text-transparent drop-shadow-xl bg-clip-text bg-gradient-to-r from-slate-100 via-purple-400 to-pink-600 "
         >
-          the docs
+          the docs_
         </span>
       </h1>
       <nav>
         <ul className='flex text-slate-200 gap-10 h-full items-center'>
           <li>
-            <Link href="/ratings">
+            <Link tabIndex={3} href="/">
+              Home
+            </Link>
+          </li>
+          <li>
+            <Link tabIndex={3} href="/ratings">
               Ratings
             </Link>
           </li>
           <li>
-            <a href="/propose">
+            <Link tabIndex={3} href="/propose">
               Propose
-            </a>
+            </Link>
           </li>
           <li>
-            <a href="/proposals">
+            <Link tabIndex={3} href="/proposals">
               Proposals
-            </a>
+            </Link>
           </li>
         </ul>
       </nav>

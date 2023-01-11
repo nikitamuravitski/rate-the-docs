@@ -1,0 +1,7 @@
+.versionList {
+  @apply flex gap-2 flex-wrap;
+}
+
+.versionList>li {
+  @apply text-gray-300 border border-sky-700 px-3 py-1 rounded-full cursor-pointer hover:border-sky-500;
+}

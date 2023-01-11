@@ -1,9 +1,11 @@
 import { router } from "../trpc";
 import { authRouter } from "./auth";
-import { proposalsRouter } from "./proposals";
+import { documentationRouter } from "./documentation";
+import { packageInfoRouter } from './packageInfo'
 
 export const appRouter = router({
-  proposals: proposalsRouter,
+  documentation: documentationRouter,
+  packageInfo: packageInfoRouter,
   auth: authRouter,
 });
 
