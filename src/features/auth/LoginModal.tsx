@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { signIn, getProviders, useSession, signOut } from "next-auth/react"
-import React, { useRef, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { useOutsideClick } from "../../hooks/useOutsideClick"
 import cc from 'classcat'
 import TopLeftPolygon from '../../assets/svg/polygonTriangles/1.svg'

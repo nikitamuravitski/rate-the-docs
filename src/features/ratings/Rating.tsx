@@ -39,10 +39,6 @@ const Rating = ({
         onError: async (e) => setErrorMessage(e.message)
       })
   }
-
-  useEffect(() => {
-
-  }), [version]
   return (<div className='flex flex-col items-center'>
     <div className='flex'>
       {version !== null &&
