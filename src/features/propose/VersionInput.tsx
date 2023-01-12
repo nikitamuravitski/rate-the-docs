@@ -26,7 +26,7 @@ const VersionInput = ({
               key={id + index}
               className={
                 (errorMessage ? "border-orange-400" : "border-stone-700") + ' ' +
-                inputStyles['input']
+                inputStyles.input
               }
               id={id}
               placeholder='X'
@@ -36,6 +36,10 @@ const VersionInput = ({
               onChange={e => {
                 const target = e.target as HTMLInputElement
                 value[index] = +target.value
+                if (index === 0 && value[0] !== null) {
+                  if (value[1] !== null && value[0] > value[1]) value[1] = +target.value
+                  if (!value[1]) value[1] = +target.value
+                }
                 if (e.target.value === '') value[index] = null
                 if (e.target.value === '0') value[index] = 0
                 onChangeHandler([...value])

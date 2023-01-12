@@ -10,4 +10,4 @@ export const language = z.union([
 
 export const versionRange = z
   .tuple([z.number().nullable(), z.number().positive().nullable()])
-  .refine((doc) => !doc.some(version => version === null) && doc[1]! > doc[0]!, 'Version must be valid')
+  .refine((doc) => !doc.some(version => version === null) && doc[1]! >= doc[0]!, 'Version must be valid')
