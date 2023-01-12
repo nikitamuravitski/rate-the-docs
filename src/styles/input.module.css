@@ -3,5 +3,5 @@
 }
 
 .input:focus-visible {
-  @apply outline -outline-offset-1 outline-white rounded-md
+  @apply outline -outline-offset-1 outline-white rounded-md;
 }
